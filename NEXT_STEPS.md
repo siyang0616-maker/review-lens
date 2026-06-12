@@ -25,9 +25,10 @@ Use this file as the working queue when continuing from Windows, macOS, or a new
 3. Add a strict Zod schema for `AnalysisReport`. Done.
 4. Add sample review fixtures for Korean, Japanese, Chinese, and English. Done.
 5. Add a small test runner for analyzer output shape and high-risk Korean examples. Done.
-6. Improve the UI with example tabs and a result quality warning when confidence is low.
-7. Add a shareable Markdown report download, not only clipboard copy.
-8. Build a B2B sample report page for hotel/guesthouse owners.
+6. Improve the UI with example tabs and a result quality warning when confidence is low. Next.
+7. Add a shareable Markdown report download, not only clipboard copy. Next.
+8. Build a B2B sample report page for hotel/guesthouse owners. Weekend.
+9. Keep `ROADMAP.md`, `WEEKEND_PLAN.md`, and `MACBOOK_NEXT_WORK.md` updated whenever direction changes.
 
 ## Suggested Next Codex Prompt
 
@@ -40,6 +41,6 @@ Keep Windows/macOS compatibility, avoid scraping, preserve the paste-first MVP, 
 ## This Week's Target
 
 - Working MVP: done.
-- AI-backed JSON analyzer: next.
-- Sample reports: next.
+- AI-backed JSON analyzer: done.
+- Sample reports: weekend.
 - B2C free tool page plus B2B CTA: after analyzer quality improves.

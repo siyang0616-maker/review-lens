@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="900" viewBox="0 0 1400 900">
+  <rect width="1400" height="900" fill="#f7f5ef"/>
+  <text x="70" y="82" font-family="Arial, 'Malgun Gothic', sans-serif" font-size="42" font-weight="800" fill="#17201b">Review Lens Roadmap</text>
+  <text x="72" y="122" font-family="Arial, 'Malgun Gothic', sans-serif" font-size="20" fill="#667169">번역기가 놓치는 리뷰의 숨은 경고를 여행자 조언과 사업자 액션으로 바꾸는 MVP 로드맵</text>
+
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#8b948d"/>
+    </marker>
+    <style>
+      .box { rx: 12; ry: 12; stroke-width: 2; }
+      .done { fill: #e8f6f2; stroke: #0f766e; }
+      .next { fill: #fff7e6; stroke: #a16207; }
+      .later { fill: #ffffff; stroke: #d9ded6; }
+      .title { font: 800 22px Arial, 'Malgun Gothic', sans-serif; fill: #17201b; }
+      .body { font: 16px Arial, 'Malgun Gothic', sans-serif; fill: #4b5a52; }
+      .badge { font: 700 14px Arial, 'Malgun Gothic', sans-serif; }
+      .line { stroke: #8b948d; stroke-width: 3; marker-end: url(#arrow); }
+    </style>
+  </defs>
+
+  <rect x="70" y="185" width="250" height="130" class="box done"/>
+  <text x="92" y="225" class="title">0. 전략 정리</text>
+  <text x="92" y="256" class="body">시장/제품 방향 결정</text>
+  <text x="92" y="286" class="badge" fill="#0f766e">완료</text>
+
+  <line x1="320" y1="250" x2="385" y2="250" class="line"/>
+
+  <rect x="400" y="185" width="250" height="130" class="box done"/>
+  <text x="422" y="225" class="title">1. MVP 골격</text>
+  <text x="422" y="256" class="body">붙여넣기 앱/API</text>
+  <text x="422" y="286" class="badge" fill="#0f766e">완료</text>
+
+  <line x1="650" y1="250" x2="715" y2="250" class="line"/>
+
+  <rect x="730" y="185" width="250" height="130" class="box done"/>
+  <text x="752" y="225" class="title">2. 로컬 분석</text>
+  <text x="752" y="256" class="body">Hidden Signal 사전</text>
+  <text x="752" y="286" class="badge" fill="#0f766e">완료</text>
+
+  <line x1="980" y1="250" x2="1045" y2="250" class="line"/>
+
+  <rect x="1060" y="185" width="250" height="130" class="box done"/>
+  <text x="1082" y="225" class="title">3. AI 분석 연결</text>
+  <text x="1082" y="256" class="body">JSON schema + fallback</text>
+  <text x="1082" y="286" class="badge" fill="#0f766e">완료</text>
+
+  <line x1="1185" y1="315" x2="1185" y2="390" class="line"/>
+
+  <rect x="1060" y="405" width="250" height="130" class="box next"/>
+  <text x="1082" y="445" class="title">4. 품질 검증</text>
+  <text x="1082" y="476" class="body">실제 API key 테스트</text>
+  <text x="1082" y="506" class="badge" fill="#a16207">다음 작업</text>
+
+  <line x1="1060" y1="470" x2="995" y2="470" class="line"/>
+
+  <rect x="730" y="405" width="250" height="130" class="box next"/>
+  <text x="752" y="445" class="title">5. 데모 UI</text>
+  <text x="752" y="476" class="body">예시 탭/신뢰도 경고</text>
+  <text x="752" y="506" class="badge" fill="#a16207">주말</text>
+
+  <line x1="730" y1="470" x2="665" y2="470" class="line"/>
+
+  <rect x="400" y="405" width="250" height="130" class="box next"/>
+  <text x="422" y="445" class="title">6. B2B 샘플</text>
+  <text x="422" y="476" class="body">호텔 리포트 페이지</text>
+  <text x="422" y="506" class="badge" fill="#a16207">주말</text>
+
+  <line x1="400" y1="470" x2="335" y2="470" class="line"/>
+
+  <rect x="70" y="405" width="250" height="130" class="box later"/>
+  <text x="92" y="445" class="title">7. 사용자 검증</text>
+  <text x="92" y="476" class="body">여행자/B2B 반응</text>
+  <text x="92" y="506" class="badge" fill="#667169">다음 주</text>
+
+  <line x1="195" y1="535" x2="195" y2="610" class="line"/>
+
+  <rect x="70" y="625" width="250" height="130" class="box later"/>
+  <text x="92" y="665" class="title">8. 수익화 실험</text>
+  <text x="92" y="696" class="body">1회 리포트/구독</text>
+  <text x="92" y="726" class="badge" fill="#667169">이후</text>
+
+  <rect x="400" y="625" width="910" height="130" rx="12" ry="12" fill="#ffffff" stroke="#d9ded6" stroke-width="2"/>
+  <text x="430" y="665" class="title">주말 성공 기준</text>
+  <text x="430" y="699" class="body">1. 샘플만 눌러도 제품 차별점이 10초 안에 이해된다.</text>
+  <text x="430" y="727" class="body">2. AI 결과가 과해석 없이 근거 표현을 보여준다.</text>
+  <text x="430" y="755" class="body">3. 호텔/게스트하우스 사업자에게 보여줄 샘플 리포트가 생긴다.</text>
+
+  <text x="70" y="835" font-family="Arial, 'Malgun Gothic', sans-serif" font-size="18" fill="#667169">이번 주말에는 scraping, Google OAuth, 로그인, DB, 결제, 자동 답글 게시를 넣지 않는다.</text>
+</svg>
