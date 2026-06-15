@@ -22,11 +22,12 @@ Review Lens는 번역기가 놓치는 해외 리뷰의 숨은 경고, 원어민 
 | 1. MVP 골격 | 완료 | 붙여넣기형 앱 구현 | Next.js app, `/api/analyze` |
 | 2. 로컬 분석 | 완료 | 숨은 표현 사전 기반 분석 | `lib/hidden-signals.ts`, `lib/analyze.ts` |
 | 3. AI 분석 연결 | 완료 | OpenAI JSON 분석 경로 추가 | `lib/ai-analyze.ts`, schema |
-| 4. 품질 검증 | 진행 예정 | 실제 API key로 결과 품질 확인 | live test notes, fixture 보강 |
-| 5. 데모 UI | 진행 예정 | 처음 보는 사람도 바로 이해 | 예시 탭, confidence warning, download |
-| 6. B2B 샘플 | 진행 예정 | 호텔/게스트하우스 유료 리포트 느낌 | `/sample-report` |
-| 7. 사용자 검증 | 예정 | 여행자/B2B 반응 확인 | 샘플 공유, 피드백 기록 |
-| 8. 수익화 실험 | 예정 | 1회 리포트/월 구독 테스트 | pricing page, lead capture |
+| 4. 품질 검증 | 진행 중 | 실제 API key로 결과 품질 확인 | 50-sample bank, quota blocked |
+| 5. 데모 UI | 완료 | 처음 보는 사람도 바로 이해 | 예시 탭, confidence warning, Markdown download |
+| 6. B2B 샘플 | 완료 | 호텔/게스트하우스 유료 리포트 느낌 | `/sample-report` |
+| 7. 사업성 재검토 | 완료 | SaaS보다 B2C 무료 도구 + B2B 1회 리포트로 좁힘 | `BUSINESS_ANALYSIS.md` |
+| 8. 사용자 검증 | 예정 | 여행자/B2B 반응 확인 | 샘플 공유, 피드백 기록 |
+| 9. 수익화 실험 | 예정 | 1회 리포트/월 구독 테스트 | B2B CTA, lead capture |
 
 ## Mermaid Roadmap
 
@@ -46,10 +47,10 @@ flowchart LR
 
 ### 지금 가장 중요한 것
 
-1. 실제 AI 분석 품질 확인
-2. 샘플만 눌러도 이해되는 UI
-3. 결과물을 저장/공유 가능한 형태로 만들기
-4. B2B 샘플 리포트로 돈 받을 그림 만들기
+1. OpenAI billing/quota 확인 후 3개 샘플 live smoke 재실행
+2. 피드백 버튼으로 사용자 반응 수집 시작
+3. 실제 OpenAI API key로 50개 샘플 분석
+4. 실패 패턴을 prompt와 hidden-signal dictionary에 반영
 
 ### 아직 미루는 것
 
@@ -80,4 +81,3 @@ flowchart LR
 - 이번 주 목표
 - 완료/보류/방향 전환 이유
 - 다음 3개 우선순위
-

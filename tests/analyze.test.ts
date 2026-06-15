@@ -20,6 +20,19 @@ describe("local analyzer contract", () => {
     expect(report.obfuscationDetected).toBe(true);
     expect(report.severityScore).toBe(5);
     expect(report.confidenceScore).toBeGreaterThanOrEqual(80);
-    expect(report.evidencePhrases).toContain("언어권 내부 경고");
+    expect(report.evidencePhrases).toContain("한국분들만");
+    expect(report.evidencePhrases).toContain("빠퀴");
+    expect(report.normalizedReview).toContain("바퀴벌레");
+    expect(report.normalizedReview).toContain("절대 오지 마세요");
+    expect(report.riskCategories.some((risk) => risk.evidence.includes("한국분들만"))).toBe(true);
+  });
+
+  it("does not overclaim hidden warnings for ordinary positive reviews", () => {
+    const report = analyzeReview(reviewFixtures[4]);
+
+    expect(report.obfuscationDetected).toBe(false);
+    expect(report.severityScore).toBe(1);
+    expect(report.confidenceScore).toBeLessThanOrEqual(32);
+    expect(report.hiddenWarningSummary).toBe("No strong hidden warning pattern was detected yet.");
   });
 });

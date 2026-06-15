@@ -5,13 +5,18 @@ import type {
   OutputLanguage,
   RiskCategory
 } from "@/types/analysis";
-import { hiddenSignals } from "./hidden-signals";
+import { hiddenSignals, type HiddenSignal } from "./hidden-signals";
 
 type AnalyzeInput = {
   reviewText: string;
   mode: AnalysisMode;
   businessType: BusinessType;
   outputLanguage: OutputLanguage;
+};
+
+type SignalMatch = {
+  phrase: string;
+  signal: HiddenSignal;
 };
 
 const languageMatchers = [
@@ -70,20 +75,24 @@ export function analyzeReview({
 }: AnalyzeInput): AnalysisReport {
   const text = reviewText.trim();
   const detectedLanguage = detectLanguage(text);
-  const matches = hiddenSignals.filter((signal) => signal.pattern.test(text));
-  const evidencePhrases = matches.map((match) => match.label);
+  const matches = collectSignalMatches(text);
+  const evidencePhrases = unique(matches.map((match) => match.phrase));
   const obfuscationTypes = Array.from(
-    new Set(matches.map((match) => match.obfuscationType).filter(Boolean))
+    new Set(matches.map((match) => match.signal.obfuscationType).filter(Boolean))
   ) as string[];
 
   const normalizedReview = normalizeReview(text, matches);
   const riskCategories = buildRiskCategories(matches, outputLanguage);
-  const severityScore = Math.max(1, Math.min(5, Math.max(...matches.map((m) => m.severityHint), 1)));
+  const severityScore = Math.max(
+    1,
+    Math.min(5, Math.max(...matches.map((m) => m.signal.severityHint), 1))
+  );
   const confidenceScore = calculateConfidence(matches.length, text.length, obfuscationTypes.length);
   const hiddenWarningSummary = buildHiddenWarningSummary(matches, outputLanguage);
   const nativeSpeakerMeaning = buildNativeMeaning(matches, businessType, outputLanguage);
 
   return {
+    analysisSource: "local",
     detectedLanguage,
     obfuscationDetected: obfuscationTypes.length > 0,
     obfuscationType: obfuscationTypes,
@@ -114,30 +123,71 @@ function detectLanguage(text: string) {
   return "en";
 }
 
-function normalizeReview(text: string, matches: typeof hiddenSignals) {
-  let normalized = text;
+function collectSignalMatches(text: string): SignalMatch[] {
+  return hiddenSignals.flatMap((signal) => {
+    const flags = signal.pattern.flags.includes("g")
+      ? signal.pattern.flags
+      : `${signal.pattern.flags}g`;
+    const globalPattern = new RegExp(signal.pattern.source, flags);
+    const matches: SignalMatch[] = [];
+
+    for (const match of text.matchAll(globalPattern)) {
+      if (match[0]) {
+        matches.push({ phrase: match[0], signal });
+      }
+    }
+
+    return matches;
+  });
+}
+
+const normalizationRules = [
+  { pattern: /쨕쪙|작썽/g, replacement: "작성" },
+  { pattern: /숙쏘|쑥소|숙소오/g, replacement: "숙소" },
+  { pattern: /홋쓰트|호쓰트/g, replacement: "호스트" },
+  { pattern: /깨꼬생/g, replacement: "개고생" },
+  { pattern: /빠퀴/g, replacement: "바퀴" },
+  { pattern: /뜨럽/g, replacement: "더럽" },
+  { pattern: /쩔때|절때/g, replacement: "절대" },
+  { pattern: /오찌마세요|오쥐마세요|오찌마/g, replacement: "오지 마세요" }
+];
+
+function normalizeReview(text: string, matches: SignalMatch[]) {
+  let normalized = normalizationRules.reduce(
+    (current, rule) => current.replace(rule.pattern, rule.replacement),
+    text
+  );
+  const notes: string[] = [];
+
   for (const match of matches) {
-    if (match.normalized) {
-      normalized += `\n\n[normalized signal] ${match.label} -> ${match.normalized}`;
+    if (match.signal.normalized) {
+      notes.push(`"${match.phrase}" -> ${match.signal.normalized}`);
     }
   }
+
+  if (notes.length > 0) {
+    normalized += `\n\n[normalization notes]\n${unique(notes)
+      .map((note) => `- ${note}`)
+      .join("\n")}`;
+  }
+
   return normalized;
 }
 
-function buildRiskCategories(matches: typeof hiddenSignals, outputLanguage: OutputLanguage): RiskCategory[] {
+function buildRiskCategories(matches: SignalMatch[], outputLanguage: OutputLanguage): RiskCategory[] {
   const groups = new Map<string, RiskCategory>();
 
   for (const match of matches) {
-    for (const category of match.categories) {
+    for (const category of match.signal.categories) {
       const existing = groups.get(category);
       if (existing) {
-        existing.severity = Math.max(existing.severity, match.severityHint);
-        existing.evidence.push(match.label);
+        existing.severity = Math.max(existing.severity, match.signal.severityHint);
+        existing.evidence = unique([...existing.evidence, match.phrase]);
       } else {
         groups.set(category, {
           category: categoryLabels[outputLanguage][category] ?? category,
-          severity: match.severityHint,
-          evidence: [match.label]
+          severity: match.signal.severityHint,
+          evidence: [match.phrase]
         });
       }
     }
@@ -164,21 +214,23 @@ function calculateConfidence(matchCount: number, textLength: number, obfuscation
   return Math.min(92, base + matchBoost + lengthBoost + obfuscationBoost);
 }
 
-function buildHiddenWarningSummary(matches: typeof hiddenSignals, outputLanguage: OutputLanguage) {
+function buildHiddenWarningSummary(matches: SignalMatch[], outputLanguage: OutputLanguage) {
   if (matches.length === 0) {
     return outputLanguage === "ko"
       ? "뚜렷한 숨은 경고 표현은 아직 감지되지 않았습니다."
       : "No strong hidden warning pattern was detected yet.";
   }
 
-  const meanings = matches.slice(0, 4).map((match) => match.meaning);
+  const meanings = matches
+    .slice(0, 4)
+    .map((match) => `"${match.phrase}": ${match.signal.meaning}`);
   return outputLanguage === "ko"
     ? `감지된 핵심 신호: ${meanings.join(" ")}`
     : `Detected signals: ${meanings.join(" ")}`;
 }
 
 function buildNativeMeaning(
-  matches: typeof hiddenSignals,
+  matches: SignalMatch[],
   businessType: BusinessType,
   outputLanguage: OutputLanguage
 ) {
@@ -209,7 +261,7 @@ function buildNaturalTranslation(
 }
 
 function buildTravelerAdvice(
-  matches: typeof hiddenSignals,
+  matches: SignalMatch[],
   severityScore: number,
   mode: AnalysisMode,
   businessType: BusinessType,
@@ -235,6 +287,10 @@ function buildTravelerAdvice(
     : outputLanguage === "ko"
       ? "현재 입력만으로는 강한 숨은 불만을 단정하기 어렵습니다."
       : "This input alone is not enough to confirm a strong hidden complaint.";
+}
+
+function unique<T>(items: T[]) {
+  return Array.from(new Set(items));
 }
 
 function buildOwnerActions(

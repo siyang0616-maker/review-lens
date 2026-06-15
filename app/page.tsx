@@ -9,8 +9,35 @@ import type {
 } from "@/types/analysis";
 import { reportToMarkdown } from "@/lib/export-markdown";
 
-const sampleReview =
-  "한국분들만 알아보게 쨕쪙하겠습니다. 이 숙쏘는 위치만 보고 예약하면 깨꼬생합니다. 빠퀴벌레 봤고 화장실도 뜨럽고 쩔때 오찌마세요.";
+const exampleReviews = [
+  {
+    label: "Korean coded",
+    businessType: "hotel" as BusinessType,
+    outputLanguage: "ko" as OutputLanguage,
+    text: "한국분들만 알아보게 쨕쪙하겠습니다. 이 숙쏘는 위치만 보고 예약하면 깨꼬생합니다. 빠퀴벌레 봤고 화장실도 뜨럽고 쩔때 오찌마세요."
+  },
+  {
+    label: "Japanese subtle",
+    businessType: "guesthouse" as BusinessType,
+    outputLanguage: "ko" as OutputLanguage,
+    text: "次はないかなと思いました。写真はきれいでしたが、部屋の清潔感に欠ける感じで、夜も少しうるさかったです。"
+  },
+  {
+    label: "Chinese warning",
+    businessType: "hotel" as BusinessType,
+    outputLanguage: "en" as OutputLanguage,
+    text: "避雷，别来。照片很好看但实际房间很旧，卫生间味道很重，不值这个价格。"
+  },
+  {
+    label: "English trap",
+    businessType: "restaurant" as BusinessType,
+    outputLanguage: "en" as OutputLanguage,
+    text: "It looked cute online, but it felt like a tourist trap. Overpriced food, sticky tables, and I would not go again."
+  }
+];
+
+const sampleReview = exampleReviews[0].text;
+type FeedbackVote = "accurate" | "overinterpreted" | "missed_signal" | "weak_action";
 
 export default function Home() {
   const [reviewText, setReviewText] = useState(sampleReview);
@@ -20,6 +47,7 @@ export default function Home() {
   const [report, setReport] = useState<AnalysisReport | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [feedbackSaved, setFeedbackSaved] = useState<FeedbackVote | null>(null);
 
   const markdown = useMemo(() => (report ? reportToMarkdown(report) : ""), [report]);
 
@@ -47,6 +75,7 @@ export default function Home() {
 
       const nextReport = (await response.json()) as AnalysisReport;
       setReport(nextReport);
+      setFeedbackSaved(null);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "알 수 없는 오류가 발생했습니다.");
     } finally {
@@ -58,6 +87,59 @@ export default function Home() {
     await navigator.clipboard.writeText(value);
   }
 
+  function loadExample(example: (typeof exampleReviews)[number]) {
+    setReviewText(example.text);
+    setBusinessType(example.businessType);
+    setOutputLanguage(example.outputLanguage);
+    setReport(null);
+    setError("");
+    setFeedbackSaved(null);
+  }
+
+  function downloadMarkdown() {
+    if (!report) {
+      return;
+    }
+
+    const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `review-lens-report-${new Date().toISOString().slice(0, 10)}.md`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function saveFeedback(vote: FeedbackVote) {
+    if (!report) {
+      return;
+    }
+
+    const entry = {
+      createdAt: new Date().toISOString(),
+      vote,
+      mode,
+      businessType,
+      outputLanguage,
+      reviewText,
+      reportSummary: {
+        analysisSource: report.analysisSource ?? "local",
+        detectedLanguage: report.detectedLanguage,
+        severityScore: report.severityScore,
+        confidenceScore: report.confidenceScore,
+        evidencePhrases: report.evidencePhrases,
+        hiddenWarningSummary: report.hiddenWarningSummary
+      }
+    };
+    const key = "reviewLensFeedback.v1";
+    const existing = JSON.parse(localStorage.getItem(key) ?? "[]") as unknown[];
+
+    localStorage.setItem(key, JSON.stringify([entry, ...existing].slice(0, 50)));
+    setFeedbackSaved(vote);
+  }
+
   return (
     <main className="shell">
       <header className="topbar">
@@ -66,7 +148,12 @@ export default function Home() {
             <span className="brand-mark">L</span>
             <span>Review Lens</span>
           </div>
-          <div className="status">Paste-first MVP</div>
+          <div className="topbar-actions">
+            <a className="top-link" href="/sample-report">
+              Sample report
+            </a>
+            <div className="status">Paste-first MVP</div>
+          </div>
         </div>
       </header>
 
@@ -133,6 +220,17 @@ export default function Home() {
 
             <div className="field">
               <label htmlFor="reviewText">Review text</label>
+              <div className="example-tabs" aria-label="Example reviews">
+                {exampleReviews.map((example) => (
+                  <button
+                    key={example.label}
+                    onClick={() => loadExample(example)}
+                    type="button"
+                  >
+                    {example.label}
+                  </button>
+                ))}
+              </div>
               <textarea
                 id="reviewText"
                 value={reviewText}
@@ -178,10 +276,31 @@ export default function Home() {
                     Language {report.detectedLanguage} · Evidence {report.evidencePhrases.length}
                   </div>
                 </div>
-                <button className="secondary" onClick={() => copyText(markdown)} type="button">
-                  Copy Markdown
-                </button>
+                <div className="result-actions">
+                  <span className={`source-pill ${report.analysisSource ?? "local"}`}>
+                    {sourceLabel(report)}
+                  </span>
+                  <button className="secondary" onClick={() => copyText(markdown)} type="button">
+                    Copy Markdown
+                  </button>
+                  <button className="secondary" onClick={downloadMarkdown} type="button">
+                    Download .md
+                  </button>
+                </div>
               </div>
+
+              {report.confidenceScore < 55 ? (
+                <div className="quality-warning">
+                  Confidence is low. Treat this as a weak signal and compare more reviews
+                  before making a decision.
+                </div>
+              ) : null}
+
+              {report.severityScore >= 5 ? (
+                <div className="severity-warning">
+                  Strong hidden warning detected. Check the evidence phrases before acting.
+                </div>
+              ) : null}
 
               <div className="score-row">
                 <div className="score">
@@ -270,6 +389,58 @@ export default function Home() {
 
                 <ReportSection title="Suggested reply draft" value={report.suggestedReplyDraft} />
 
+                <div className="feedback-panel">
+                  <div>
+                    <span>Quality feedback</span>
+                    <h2>이 해석이 맞았나요?</h2>
+                    <p>
+                      지금은 브라우저에만 저장됩니다. 실제 사용자 검증 전까지 어떤 결과가
+                      과해석인지, 어떤 신호를 놓쳤는지 모으기 위한 임시 장치입니다.
+                    </p>
+                  </div>
+                  <div className="feedback-actions">
+                    <button onClick={() => saveFeedback("accurate")} type="button">
+                      맞음
+                    </button>
+                    <button onClick={() => saveFeedback("overinterpreted")} type="button">
+                      과해석
+                    </button>
+                    <button onClick={() => saveFeedback("missed_signal")} type="button">
+                      신호 놓침
+                    </button>
+                    <button onClick={() => saveFeedback("weak_action")} type="button">
+                      액션 약함
+                    </button>
+                  </div>
+                  {feedbackSaved ? (
+                    <div className="feedback-saved">
+                      Saved: {feedbackLabel(feedbackSaved)}
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="b2b-cta">
+                  <div>
+                    <span>For hotel and guesthouse owners</span>
+                    <h2>외국어 리뷰 속 숨은 불만을 주간 리포트로 정리해드립니다</h2>
+                    <p>
+                      리뷰 30~100개를 바탕으로 언어권별 경고 신호, 반복 불만, 먼저 고칠
+                      3가지, 답글 초안, 직원 체크리스트를 1페이지 리포트로 만듭니다.
+                    </p>
+                  </div>
+                  <div className="b2b-actions">
+                    <a className="primary-link" href="/sample-report">
+                      샘플 리포트 보기
+                    </a>
+                    <a
+                      className="secondary-link"
+                      href="mailto:hello@example.com?subject=Review%20Lens%201-time%20report"
+                    >
+                      1회 리포트 문의
+                    </a>
+                  </div>
+                </div>
+
                 <div className="section">
                   <div className="section-head">
                     <h2>Limitations</h2>
@@ -287,6 +458,29 @@ export default function Home() {
       </div>
     </main>
   );
+}
+
+function feedbackLabel(vote: FeedbackVote) {
+  const labels: Record<FeedbackVote, string> = {
+    accurate: "맞음",
+    missed_signal: "신호 놓침",
+    overinterpreted: "과해석",
+    weak_action: "액션 약함"
+  };
+
+  return labels[vote];
+}
+
+function sourceLabel(report: AnalysisReport) {
+  if (report.analysisSource === "ai") {
+    return report.modelName ? `AI analyzer · ${report.modelName}` : "AI analyzer";
+  }
+
+  if (report.analysisSource === "ai_fallback") {
+    return "AI fallback · local result";
+  }
+
+  return "Local analyzer";
 }
 
 function ReportSection({ title, value }: { title: string; value: string }) {

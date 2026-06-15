@@ -27,5 +27,12 @@ export const reviewFixtures: AnalyzeRequest[] = [
     mode: "business",
     businessType: "restaurant",
     outputLanguage: "en"
+  },
+  {
+    reviewText:
+      "The room was clean, check-in was smooth, and the staff helped us find a taxi. Breakfast was simple but fine.",
+    mode: "traveler",
+    businessType: "hotel",
+    outputLanguage: "en"
   }
 ];

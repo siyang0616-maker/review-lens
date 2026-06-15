@@ -61,17 +61,17 @@
 
   <line x1="730" y1="470" x2="665" y2="470" class="line"/>
 
-  <rect x="400" y="405" width="250" height="130" class="box next"/>
+  <rect x="400" y="405" width="250" height="130" class="box done"/>
   <text x="422" y="445" class="title">6. B2B 샘플</text>
   <text x="422" y="476" class="body">호텔 리포트 페이지</text>
-  <text x="422" y="506" class="badge" fill="#a16207">주말</text>
+  <text x="422" y="506" class="badge" fill="#0f766e">완료</text>
 
   <line x1="400" y1="470" x2="335" y2="470" class="line"/>
 
   <rect x="70" y="405" width="250" height="130" class="box later"/>
   <text x="92" y="445" class="title">7. 사용자 검증</text>
   <text x="92" y="476" class="body">여행자/B2B 반응</text>
-  <text x="92" y="506" class="badge" fill="#667169">다음 주</text>
+  <text x="92" y="506" class="badge" fill="#a16207">다음 작업</text>
 
   <line x1="195" y1="535" x2="195" y2="610" class="line"/>
 
@@ -81,10 +81,10 @@
   <text x="92" y="726" class="badge" fill="#667169">이후</text>
 
   <rect x="400" y="625" width="910" height="130" rx="12" ry="12" fill="#ffffff" stroke="#d9ded6" stroke-width="2"/>
-  <text x="430" y="665" class="title">주말 성공 기준</text>
-  <text x="430" y="699" class="body">1. 샘플만 눌러도 제품 차별점이 10초 안에 이해된다.</text>
-  <text x="430" y="727" class="body">2. AI 결과가 과해석 없이 근거 표현을 보여준다.</text>
-  <text x="430" y="755" class="body">3. 호텔/게스트하우스 사업자에게 보여줄 샘플 리포트가 생긴다.</text>
+  <text x="430" y="665" class="title">다음 성공 기준</text>
+  <text x="430" y="699" class="body">1. 실제 API 키로 AI 분석 품질과 과해석 여부를 확인한다.</text>
+  <text x="430" y="727" class="body">2. 여행자/B2B 사용자에게 보여줄 피드백 질문을 정리한다.</text>
+  <text x="430" y="755" class="body">3. 무료 도구 화면에서 B2B 샘플 리포트로 자연스럽게 연결한다.</text>
 
   <text x="70" y="835" font-family="Arial, 'Malgun Gothic', sans-serif" font-size="18" fill="#667169">이번 주말에는 scraping, Google OAuth, 로그인, DB, 결제, 자동 답글 게시를 넣지 않는다.</text>
 </svg>

@@ -14,6 +14,8 @@ export const riskCategorySchema = z.object({
 });
 
 export const analysisReportSchema = z.object({
+  analysisSource: z.enum(["local", "ai", "ai_fallback"]).optional(),
+  modelName: z.string().min(1).optional(),
   detectedLanguage: z.string().min(2).max(24),
   obfuscationDetected: z.boolean(),
   obfuscationType: z.array(z.string().min(1)).max(12),

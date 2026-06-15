@@ -21,12 +21,21 @@ export async function POST(request: Request) {
 
   try {
     const aiReport = await analyzeReviewWithAi(parsed.data, localReport);
-    return NextResponse.json(aiReport ?? localReport);
+    if (aiReport) {
+      return NextResponse.json({
+        ...aiReport,
+        analysisSource: "ai",
+        modelName: process.env.OPENAI_MODEL || "gpt-5.5"
+      });
+    }
+
+    return NextResponse.json(localReport);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown AI analyzer error";
 
     return NextResponse.json({
       ...localReport,
+      analysisSource: "ai_fallback",
       limitations: [
         ...localReport.limitations,
         `AI analyzer fallback used: ${message}`

@@ -16,6 +16,8 @@ export type RiskCategory = {
 };
 
 export type AnalysisReport = {
+  analysisSource?: "local" | "ai" | "ai_fallback";
+  modelName?: string;
   detectedLanguage: string;
   obfuscationDetected: boolean;
   obfuscationType: string[];
