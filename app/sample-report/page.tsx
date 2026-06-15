@@ -65,6 +65,9 @@ export default function SampleReportPage() {
           <a className="top-link" href="/">
             Analyzer
           </a>
+          <a className="top-link" href="/feedback">
+            Feedback
+          </a>
         </div>
       </header>
 

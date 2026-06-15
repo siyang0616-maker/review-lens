@@ -152,6 +152,9 @@ export default function Home() {
             <a className="top-link" href="/sample-report">
               Sample report
             </a>
+            <a className="top-link" href="/feedback">
+              Feedback
+            </a>
             <div className="status">Paste-first MVP</div>
           </div>
         </div>

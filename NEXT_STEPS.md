@@ -37,7 +37,8 @@ Use this file as the working queue when continuing from Windows, macOS, or a new
 15. Add B2B CTA under analyzer results. Done.
 16. Add feedback buttons for result quality. Done.
 17. Resolve OpenAI `insufficient_quota` before running more live AI tests. Next.
-18. Replace localStorage feedback with a real lead/feedback capture flow when deployment target is chosen. Later.
+18. Add a local feedback review/export page at `/feedback`. Done.
+19. Replace localStorage feedback with a real lead/feedback capture flow when deployment target is chosen. Later.
 
 ## Suggested Next Codex Prompt
 
@@ -56,4 +57,4 @@ Keep Windows/macOS compatibility, avoid scraping, preserve the paste-first MVP, 
 - Live AI quality check: blocked by OpenAI `insufficient_quota`.
 - Business direction: validate as B2C free tool plus B2B one-time report, not full SaaS yet.
 - B2C free tool page plus B2B CTA: done.
-- Feedback capture: local browser storage MVP done.
+- Feedback capture: local browser storage MVP plus `/feedback` review/export page done.

@@ -44,19 +44,24 @@ Review Lens는 현재 paste-first MVP까지 만들어졌다.
 - Vitest 테스트
 - Windows/macOS 호환 설정
 - `npm run check` 검증 루틴
+- 예시 리뷰 탭
+- confidence/severity 경고 UI
+- Markdown 복사/다운로드
+- B2B 샘플 리포트 `/sample-report`
+- B2B CTA
+- 결과 품질 피드백 버튼
+- 피드백 검토/CSV/JSON export 페이지 `/feedback`
 
 아직 안 된 것:
 
-- 실제 OpenAI API key로 live 분석 품질 확인
-- UI 예시 탭
-- confidence 낮을 때 경고 UI
-- Markdown 파일 다운로드
-- B2B 샘플 리포트 페이지
-- 여행자용 무료 도구 랜딩/공유 흐름
+- 실제 OpenAI API key로 live 분석 품질 확인: 현재 `insufficient_quota`로 막힘
+- 배포된 URL에서 외부 사용자 반응 확인
+- localStorage 피드백을 서버 저장/폼 제출로 전환
+- 실제 lead capture 또는 문의 폼 연결
 
 ## 맥북에서 다음으로 할 일
 
-### 1순위: 실제 AI 분석 품질 확인
+### 1순위: OpenAI quota 해결 후 실제 AI 분석 품질 확인
 
 `.env.local` 생성:
 
@@ -73,35 +78,34 @@ OPENAI_MODEL=gpt-5.5
 - 사업자 액션이 구체적인가
 - 답글 초안이 방어적이거나 과장되지 않는가
 
-### 2순위: UI를 제품처럼 만들기
+실행:
 
-다음 UI 개선을 먼저 한다:
-
-- 예시 리뷰 탭: Korean, Japanese, Chinese, English
-- 결과 상단에 `Local analyzer` / `AI analyzer` 표시
-- confidence가 55 미만이면 "참고 수준" 경고
-- severity가 5면 "강한 경고 신호" 배지
-- Markdown 다운로드 버튼
-
-### 3순위: B2B 샘플 리포트 만들기
-
-호텔/게스트하우스 사업자에게 보여줄 샘플 페이지를 만든다.
-
-페이지 후보:
-
-```text
-/sample-report
+```bash
+RUN_AI_QUALITY=1 AI_QUALITY_LIMIT=3 npm run test:ai-quality
 ```
 
-포함할 섹션:
+### 2순위: 피드백 결과 확인
 
-- 이번 주 외국어 리뷰 위험 요약
-- 언어권별 반복 신호
-- 매출/예약 전환 리스크
-- 먼저 고칠 3가지
-- 직원 공유 체크리스트
-- 답글 초안
-- 다음 7일 액션
+브라우저에서:
+
+```text
+http://127.0.0.1:3000/feedback
+```
+
+확인할 것:
+
+- 과해석 피드백이 반복되는 표현
+- 놓친 신호로 기록된 표현
+- 사업자 액션이 약하다고 찍힌 결과
+- CSV export 후 `QUALITY_REVIEW.md`에 실패 패턴 반영
+
+### 3순위: 외부 검증 준비
+
+준비할 것:
+
+- 여행자에게 보여줄 3개 샘플 리뷰
+- 호텔/게스트하우스 사장에게 보여줄 `/sample-report`
+- "이 결과에 돈을 낼 이유가 있는가"를 확인할 질문 5개
 
 ## 다음 Codex에게 줄 프롬프트
 
@@ -109,6 +113,7 @@ OPENAI_MODEL=gpt-5.5
 MACBOOK_NEXT_WORK.md와 ROADMAP.md를 기준으로 Review Lens를 이어서 진행해줘.
 먼저 repo 상태와 NEXT_STEPS.md를 확인하고, 현재 가장 중요한 다음 작업을 네가 골라 구현해.
 우선순위는 실제 AI 분석 품질 확인, UI 예시 탭/신뢰도 경고, Markdown 다운로드, B2B 샘플 리포트 순서야.
+지금은 UI/B2B/피드백 페이지까지 완료됐고, OpenAI quota가 막혀 있으면 live AI 대신 `/feedback`과 외부 검증 준비를 진행해.
 paste-first MVP 원칙을 지키고 scraping, Google OAuth, 자동 답글 게시, DB는 아직 넣지 마.
 끝나기 전에 npm run check를 실행하고 ROADMAP.md의 진행 상태를 업데이트해줘.
 ```
@@ -120,4 +125,3 @@ paste-first MVP 원칙을 지키고 scraping, Google OAuth, 자동 답글 게시
 - 국가/민족 고정관념처럼 보이면 안 된다. 언어권 표현 패턴으로만 설명한다.
 - 단일 리뷰로 강한 결론을 내리지 않는다. confidence와 limitation을 항상 보여준다.
 - B2C는 유입, B2B는 수익화라는 방향을 유지한다.
-

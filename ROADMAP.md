@@ -9,9 +9,9 @@ Review Lens는 번역기가 놓치는 해외 리뷰의 숨은 경고, 원어민 
 ## 현재 위치
 
 ```text
-아이디어 정리 -> MVP 골격 -> 로컬 분석 -> AI 분석 연결 -> 품질 검증/데모화
-                                             ^
-                                             현재 여기
+아이디어 정리 -> MVP 골격 -> 로컬 분석 -> AI 분석 연결 -> 품질 검증/데모화 -> 사용자 검증 준비
+                                                                   ^
+                                                                   현재 여기
 ```
 
 ## 단계별 로드맵
@@ -26,7 +26,7 @@ Review Lens는 번역기가 놓치는 해외 리뷰의 숨은 경고, 원어민 
 | 5. 데모 UI | 완료 | 처음 보는 사람도 바로 이해 | 예시 탭, confidence warning, Markdown download |
 | 6. B2B 샘플 | 완료 | 호텔/게스트하우스 유료 리포트 느낌 | `/sample-report` |
 | 7. 사업성 재검토 | 완료 | SaaS보다 B2C 무료 도구 + B2B 1회 리포트로 좁힘 | `BUSINESS_ANALYSIS.md` |
-| 8. 사용자 검증 | 예정 | 여행자/B2B 반응 확인 | 샘플 공유, 피드백 기록 |
+| 8. 사용자 검증 | 진행 중 | 여행자/B2B 반응 확인 | `/feedback` 로컬 검토함, CSV/JSON export |
 | 9. 수익화 실험 | 예정 | 1회 리포트/월 구독 테스트 | B2B CTA, lead capture |
 
 ## Mermaid Roadmap
@@ -36,10 +36,10 @@ flowchart LR
   A["전략 정리\n완료"] --> B["붙여넣기 MVP\n완료"]
   B --> C["로컬 Hidden Signal 분석\n완료"]
   C --> D["AI JSON Analyzer\n완료"]
-  D --> E["실제 API 품질 검증\n다음"]
-  E --> F["데모 UI 개선\n주말"]
-  F --> G["B2B 샘플 리포트\n주말"]
-  G --> H["사용자 반응 테스트\n다음 주"]
+  D --> E["실제 API 품질 검증\nquota 확인 필요"]
+  E --> F["데모 UI 개선\n완료"]
+  F --> G["B2B 샘플 리포트\n완료"]
+  G --> H["사용자 피드백 검토함\n진행 중"]
   H --> I["유료 리포트/구독 실험\n이후"]
 ```
 
@@ -48,9 +48,9 @@ flowchart LR
 ### 지금 가장 중요한 것
 
 1. OpenAI billing/quota 확인 후 3개 샘플 live smoke 재실행
-2. 피드백 버튼으로 사용자 반응 수집 시작
+2. `/feedback`에서 로컬 피드백을 CSV로 내려받아 실패 패턴 분류
 3. 실제 OpenAI API key로 50개 샘플 분석
-4. 실패 패턴을 prompt와 hidden-signal dictionary에 반영
+4. 배포 대상을 정한 뒤 lead/feedback capture를 localStorage에서 서버 저장으로 전환
 
 ### 아직 미루는 것
 
