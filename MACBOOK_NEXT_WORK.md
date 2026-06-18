@@ -16,6 +16,7 @@ nvm install 22
 nvm use 22
 npm ci
 npm run check
+npm run loop
 npm run dev
 ```
 
@@ -60,6 +61,12 @@ Review Lens는 현재 paste-first MVP까지 만들어졌다.
 - 실제 lead capture 또는 문의 폼 연결
 
 ## 맥북에서 다음으로 할 일
+
+먼저 현재 루프 판단을 확인한다:
+
+```bash
+npm run loop
+```
 
 ### 1순위: OpenAI quota 해결 후 실제 AI 분석 품질 확인
 

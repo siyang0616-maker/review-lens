@@ -28,6 +28,7 @@ Review Lens는 번역기가 놓치는 해외 리뷰의 숨은 경고, 원어민 
 | 7. 사업성 재검토 | 완료 | SaaS보다 B2C 무료 도구 + B2B 1회 리포트로 좁힘 | `BUSINESS_ANALYSIS.md` |
 | 8. 사용자 검증 | 진행 중 | 여행자/B2B 반응 확인 | `/feedback` 로컬 검토함, CSV/JSON export |
 | 9. 수익화 실험 | 예정 | 1회 리포트/월 구독 테스트 | B2B CTA, lead capture |
+| 10. 운영 루프 | 진행 중 | 사용자가 상세 지시하지 않아도 다음 단계 선택 | `OPERATING_LOOP.md`, `npm run loop` |
 
 ## Mermaid Roadmap
 
@@ -51,6 +52,10 @@ flowchart LR
 2. `/feedback`에서 로컬 피드백을 CSV로 내려받아 실패 패턴 분류
 3. 실제 OpenAI API key로 50개 샘플 분석
 4. 배포 대상을 정한 뒤 lead/feedback capture를 localStorage에서 서버 저장으로 전환
+
+### 자율 진행 규칙
+
+사용자가 "다음으로 진행해줘"처럼 넓게 지시하면 `OPERATING_LOOP.md`를 먼저 읽고, 막힌 일은 보류한 뒤 repo 안에서 가능한 가장 높은 가치의 다음 작업을 수행한다.
 
 ### 아직 미루는 것
 

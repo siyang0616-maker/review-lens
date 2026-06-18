@@ -8,6 +8,8 @@ Use this file as the working queue when continuing from Windows, macOS, or a new
 - It has no login, no database, no Google scraping, and no automatic review posting.
 - The first analyzer is rule-based through `lib/hidden-signals.ts` and `lib/analyze.ts`.
 - The product direction is `Review Lens`: hidden review meaning, native-coded warnings, intentional misspellings, slang, and business/traveler actions.
+- Use `OPERATING_LOOP.md` as the autonomous next-step rule when the user says "continue" or gives no detailed instruction.
+- Run `npm run loop` to print the current blocked items and next unblocked actions.
 
 ## Cross-Platform Rules
 
@@ -43,9 +45,9 @@ Use this file as the working queue when continuing from Windows, macOS, or a new
 ## Suggested Next Codex Prompt
 
 ```text
-Continue the Review Lens MVP from NEXT_STEPS.md.
-First inspect the repo, then implement the next highest-leverage step.
-Keep Windows/macOS compatibility, avoid scraping, preserve the paste-first MVP, and run npm run check before finishing.
+Continue the Review Lens MVP from OPERATING_LOOP.md and NEXT_STEPS.md.
+First inspect the repo, separate blocked work from unblocked work, then implement the highest-leverage unblocked step.
+Keep Windows/macOS compatibility, avoid scraping, preserve the paste-first MVP, update roadmap docs, and run npm run check before finishing.
 ```
 
 ## This Week's Target

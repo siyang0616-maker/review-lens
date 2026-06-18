@@ -11,6 +11,14 @@ npm run dev
 
 Open `http://localhost:3000`.
 
+## Operating Loop
+
+Use `OPERATING_LOOP.md` when continuing without a detailed prompt. It tells Codex how to separate blocked work from unblocked work, choose the next highest-value task, verify changes, and update roadmap docs.
+
+```bash
+npm run loop
+```
+
 ## MVP Scope
 
 - No login
