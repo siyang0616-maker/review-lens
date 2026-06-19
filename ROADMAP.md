@@ -26,8 +26,8 @@ Review Lens는 번역기가 놓치는 해외 리뷰의 숨은 경고, 원어민 
 | 5. 데모 UI | 완료 | 처음 보는 사람도 바로 이해 | 예시 탭, confidence warning, Markdown download |
 | 6. B2B 샘플 | 완료 | 호텔/게스트하우스 유료 리포트 느낌 | `/sample-report` |
 | 7. 사업성 재검토 | 완료 | SaaS보다 B2C 무료 도구 + B2B 1회 리포트로 좁힘 | `BUSINESS_ANALYSIS.md` |
-| 8. 사용자 검증 | 진행 중 | 여행자/B2B 반응 확인 | `/feedback` 로컬 검토함, CSV/JSON export |
-| 9. 수익화 실험 | 예정 | 1회 리포트/월 구독 테스트 | B2B CTA, lead capture |
+| 8. 사용자 검증 | 진행 중 | 여행자/B2B 반응 확인 | `/feedback`, `/validation-kit`, `VALIDATION_KIT.md` |
+| 9. 수익화 실험 | 진행 중 | 1회 리포트 파일럿 명분 검증 | `EXPERT_POSITIONING.md`, B2B 샘플 리포트 강화 |
 | 10. 운영 루프 | 진행 중 | 사용자가 상세 지시하지 않아도 다음 단계 선택 | `OPERATING_LOOP.md`, `npm run loop` |
 
 ## Mermaid Roadmap
@@ -49,9 +49,11 @@ flowchart LR
 ### 지금 가장 중요한 것
 
 1. OpenAI billing/quota 확인 후 3개 샘플 live smoke 재실행
-2. `/feedback`에서 로컬 피드백을 CSV로 내려받아 실패 패턴 분류
-3. 실제 OpenAI API key로 50개 샘플 분석
-4. 배포 대상을 정한 뒤 lead/feedback capture를 localStorage에서 서버 저장으로 전환
+2. `/validation-kit`으로 여행자 3명, B2B 후보 2명을 인터뷰하고 정확한 반응 기록
+3. B2B는 "관심 있음"이 아니라 유료 파일럿 승인, 선입금, 결제 링크 요청, 또는 실제 리뷰 제공을 성공 신호로 본다
+4. 첫 화면은 여행자의 예약 불안, 샘플 리포트는 숙박업 사장의 예약 1건 회수 논리로 검증한다
+5. `/feedback`에서 로컬 피드백을 CSV로 내려받아 실패 패턴 분류
+6. 배포 대상을 정한 뒤 lead/feedback capture를 localStorage에서 서버 저장으로 전환
 
 ### 자율 진행 규칙
 

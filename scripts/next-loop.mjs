@@ -5,7 +5,9 @@ const files = {
   nextSteps: "NEXT_STEPS.md",
   qualityRuns: "AI_QUALITY_RUNS.md",
   qualityReview: "QUALITY_REVIEW.md",
-  business: "BUSINESS_ANALYSIS.md"
+  business: "BUSINESS_ANALYSIS.md",
+  validationKit: "VALIDATION_KIT.md",
+  expertPositioning: "EXPERT_POSITIONING.md"
 };
 
 function read(path) {
@@ -17,11 +19,16 @@ const context = Object.fromEntries(
 );
 
 const combined = Object.values(context).join("\n");
-const quotaBlocked = /insufficient_quota|quota blocked|quota/i.test(
-  context.qualityRuns + "\n" + context.roadmap + "\n" + context.nextSteps
-);
+const aiQualityStatus =
+  context.qualityRuns.match(/Current status:\s*(blocked|resolved)/i)?.[1]?.toLowerCase() ??
+  "";
+const quotaBlocked = aiQualityStatus
+  ? aiQualityStatus === "blocked"
+  : /insufficient_quota|quota blocked/i.test(context.qualityRuns);
 const feedbackReady = /\/feedback|feedback capture|피드백 검토/i.test(combined);
 const b2bDirection = /B2B|1회 리포트|one-time report|숙박업/i.test(combined);
+const validationKitReady =
+  existsSync("VALIDATION_KIT.md") && existsSync("app/validation-kit/page.tsx");
 
 const blocked = [];
 const next = [];
@@ -38,7 +45,11 @@ if (feedbackReady) {
 }
 
 if (b2bDirection) {
-  next.push("Prepare an external validation kit: traveler questions, B2B questions, and one-time report offer.");
+  if (validationKitReady) {
+    next.push("Run the external validation kit with 3 travelers and 2 B2B candidates, then record exact reactions.");
+  } else {
+    next.push("Prepare an external validation kit: traveler questions, B2B questions, and one-time report offer.");
+  }
 }
 
 if (!quotaBlocked) {

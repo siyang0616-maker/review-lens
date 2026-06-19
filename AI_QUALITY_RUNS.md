@@ -1,5 +1,9 @@
 # AI Quality Runs
 
+Current status: blocked
+
+Blocked reason: OpenAI `insufficient_quota`
+
 ## 2026-06-15 Live Smoke Test
 
 Command:

@@ -47,6 +47,12 @@ Review Lens의 핵심 리스크는 "그럴듯하지만 근거가 약한 해석"�
   - 저장된 리뷰/판정/근거 표현 확인
   - CSV/JSON export
   - 배포 전 임시 검증용이며 서버 저장은 아직 없음
+- evidence provenance gate 추가
+  - 모든 `evidencePhrases`는 원문 리뷰에 포함되어야 함
+  - 모든 `riskCategories[].evidence`도 원문 리뷰에 포함되어야 함
+  - 중립 리뷰는 시스템 설명 문구를 evidence로 넣지 않고 빈 evidence를 허용
+- AI quality status marker 추가
+  - `AI_QUALITY_RUNS.md`의 `Current status`를 기준으로 loop가 live AI blocked/resolved를 판단
 
 ## Live AI 실행 방법
 

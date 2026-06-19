@@ -119,6 +119,9 @@ export default function FeedbackPage() {
             <a className="top-link" href="/sample-report">
               Sample report
             </a>
+            <a className="top-link" href="/validation-kit">
+              Validation
+            </a>
           </div>
         </div>
       </header>

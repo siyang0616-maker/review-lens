@@ -198,7 +198,7 @@ function buildRiskCategories(matches: SignalMatch[], outputLanguage: OutputLangu
       {
         category: "general review signal",
         severity: 2,
-        evidence: ["No strong hidden-warning pattern was detected."]
+        evidence: []
       }
     ];
   }

@@ -14,6 +14,7 @@ describe("quality sample bank", () => {
 
   it.each(qualitySamples)("meets local quality expectations for $id", (sample) => {
     const report = analyzeReview(sample.input);
+    const sourceText = sample.input.reviewText.toLowerCase();
 
     expect(report.detectedLanguage).toBe(sample.expectedLanguage);
     expect(report.severityScore).toBeGreaterThanOrEqual(sample.expectedMinSeverity);
@@ -32,6 +33,18 @@ describe("quality sample bank", () => {
           evidence.toLowerCase().includes(phrase.toLowerCase())
         )
       ).toBe(true);
+    }
+
+    for (const evidence of report.evidencePhrases) {
+      expect(evidence.length).toBeLessThanOrEqual(80);
+      expect(sourceText).toContain(evidence.toLowerCase());
+    }
+
+    for (const risk of report.riskCategories) {
+      for (const evidence of risk.evidence) {
+        expect(evidence.length).toBeLessThanOrEqual(80);
+        expect(sourceText).toContain(evidence.toLowerCase());
+      }
     }
   });
 });

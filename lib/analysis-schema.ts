@@ -80,7 +80,8 @@ export const analysisReportJsonSchema = {
           severity: { type: "integer", minimum: 1, maximum: 5 },
           evidence: {
             type: "array",
-            items: { type: "string" }
+            items: { type: "string" },
+            maxItems: 12
           }
         },
         required: ["category", "severity", "evidence"]

@@ -36,6 +36,24 @@ const exampleReviews = [
   }
 ];
 
+const valueCards = [
+  {
+    label: "Risk, not translation",
+    title: "뜻보다 중요한 건 가도 되는지",
+    text: "번역문을 읽는 데서 끝나지 않고 청결, 소음, 사진 차이, 가격 불만 같은 예약 리스크로 정리합니다."
+  },
+  {
+    label: "Native warning",
+    title: "직역하면 약해지는 회피 신호",
+    text: "次はない, 避雷, 일부러 비튼 한글 후기처럼 원어민끼리 돌려 말하는 경고를 잡습니다."
+  },
+  {
+    label: "Evidence",
+    title: "근거 문장과 신뢰도 확인",
+    text: "왜 위험하다고 보는지 원문 표현, severity, confidence를 함께 보여줘 과해석을 줄입니다."
+  }
+];
+
 const sampleReview = exampleReviews[0].text;
 type FeedbackVote = "accurate" | "overinterpreted" | "missed_signal" | "weak_action";
 
@@ -155,7 +173,10 @@ export default function Home() {
             <a className="top-link" href="/feedback">
               Feedback
             </a>
-            <div className="status">Paste-first MVP</div>
+            <a className="top-link" href="/validation-kit">
+              Validation
+            </a>
+            <div className="status">Booking risk decoder</div>
           </div>
         </div>
       </header>
@@ -163,12 +184,22 @@ export default function Home() {
       <div className="workspace">
         <section>
           <div className="intro">
-            <p className="eyebrow">Native-coded review decoder</p>
-            <h1>번역기가 놓치는 리뷰의 진짜 뜻</h1>
+            <p className="eyebrow">Hidden booking risk decoder</p>
+            <h1>해외 숙소 리뷰, 번역해도 찜찜할 때</h1>
             <p>
-              해외 숙소와 음식점 리뷰 속 숨은 경고, 발음 기반 오탈자, 은어,
-              완곡한 비추천을 복원해서 여행자 조언과 사업자 액션으로 바꿉니다.
+              원어민만 알아보는 숨은 예약 위험을 뽑아드립니다. 번역문이 아니라
+              청결, 소음, 사진 차이, 가격 불만 같은 실제 판단 기준으로 바꿉니다.
             </p>
+          </div>
+
+          <div className="value-strip">
+            {valueCards.map((card) => (
+              <div className="value-card" key={card.label}>
+                <span>{card.label}</span>
+                <strong>{card.title}</strong>
+                <p>{card.text}</p>
+              </div>
+            ))}
           </div>
 
           <div className="panel">
@@ -425,10 +456,10 @@ export default function Home() {
                 <div className="b2b-cta">
                   <div>
                     <span>For hotel and guesthouse owners</span>
-                    <h2>외국어 리뷰 속 숨은 불만을 주간 리포트로 정리해드립니다</h2>
+                    <h2>리뷰 30~100개로 이번 주 먼저 고칠 3가지를 뽑아드립니다</h2>
                     <p>
-                      리뷰 30~100개를 바탕으로 언어권별 경고 신호, 반복 불만, 먼저 고칠
-                      3가지, 답글 초안, 직원 체크리스트를 1페이지 리포트로 만듭니다.
+                      48시간 안에 외국어 리뷰의 예약 전환 방해 신호, 우선 수정 3가지,
+                      답글 초안, 직원 체크리스트를 정리합니다. 1회 $49, 구독 없음.
                     </p>
                   </div>
                   <div className="b2b-actions">

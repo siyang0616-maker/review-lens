@@ -40,7 +40,11 @@ Use this file as the working queue when continuing from Windows, macOS, or a new
 16. Add feedback buttons for result quality. Done.
 17. Resolve OpenAI `insufficient_quota` before running more live AI tests. Next.
 18. Add a local feedback review/export page at `/feedback`. Done.
-19. Replace localStorage feedback with a real lead/feedback capture flow when deployment target is chosen. Later.
+19. Add an external validation kit for traveler/B2B interviews. Done.
+20. Add expert positioning for traveler anxiety, owner ROI, and purchase psychology. Done.
+21. Strengthen sample report with proof phrases, scope, ROI, and staff handoff table. Done.
+22. Run the validation kit with 3 travelers and 2 B2B candidates. Next.
+23. Replace localStorage feedback with a real lead/feedback capture flow when deployment target is chosen. Later.
 
 ## Suggested Next Codex Prompt
 
@@ -60,3 +64,6 @@ Keep Windows/macOS compatibility, avoid scraping, preserve the paste-first MVP, 
 - Business direction: validate as B2C free tool plus B2B one-time report, not full SaaS yet.
 - B2C free tool page plus B2B CTA: done.
 - Feedback capture: local browser storage MVP plus `/feedback` review/export page done.
+- External validation kit: `/validation-kit` plus `VALIDATION_KIT.md` done.
+- Expert positioning: `EXPERT_POSITIONING.md` done.
+- Next unblocked action: run 5 validation interviews and record exact reactions.
