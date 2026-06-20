@@ -280,10 +280,10 @@ export default function Home() {
                 onClick={handleAnalyze}
                 type="button"
               >
-                {isLoading ? "Analyzing..." : "Analyze Review"}
+                {isLoading ? "Analyzing..." : "숨은 예약 위험 30초 확인"}
               </button>
               <button className="secondary" onClick={() => setReviewText(sampleReview)} type="button">
-                Sample
+                샘플 결과 먼저 보기
               </button>
             </div>
 
@@ -292,14 +292,19 @@ export default function Home() {
               MVP는 붙여넣기 텍스트만 분석합니다. Google 리뷰를 수집하거나 자동 답글을
               게시하지 않습니다.
             </div>
+            <div className="pilot-cue">
+              <strong>숙소 운영자라면</strong>
+              <span>리뷰 30개로 $49 파일럿 리포트 요청까지 검증합니다.</span>
+              <a href="/sample-report">파일럿 범위 보기</a>
+            </div>
           </div>
         </section>
 
         <section className="result-panel">
           {!report ? (
             <div className="empty">
-              리뷰를 붙여넣고 분석하면 원문, 정상화 문장, 숨은 의미, 위험 카테고리,
-              여행자 조언, 사업자 액션이 여기에 표시됩니다.
+              위험도 / 근거 문장 / 예약 전 확인할 것 / 사장님이 오늘 고칠 3가지가
+              여기에 표시됩니다.
             </div>
           ) : (
             <>

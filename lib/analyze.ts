@@ -87,7 +87,14 @@ export function analyzeReview({
     1,
     Math.min(5, Math.max(...matches.map((m) => m.signal.severityHint), 1))
   );
-  const confidenceScore = calculateConfidence(matches.length, text.length, obfuscationTypes.length);
+  const rawConfidenceScore = calculateConfidence(
+    matches.length,
+    text.length,
+    obfuscationTypes.length
+  );
+  const confidenceScore = shouldUseCautiousSummary(matches)
+    ? Math.min(rawConfidenceScore, 55)
+    : rawConfidenceScore;
   const hiddenWarningSummary = buildHiddenWarningSummary(matches, outputLanguage);
   const nativeSpeakerMeaning = buildNativeMeaning(matches, businessType, outputLanguage);
 
@@ -214,11 +221,26 @@ function calculateConfidence(matchCount: number, textLength: number, obfuscation
   return Math.min(92, base + matchBoost + lengthBoost + obfuscationBoost);
 }
 
+function hasStrongEvidence(matches: SignalMatch[]) {
+  return matches.some((match) => match.signal.severityHint >= 5);
+}
+
+function shouldUseCautiousSummary(matches: SignalMatch[]) {
+  return matches.length === 1 && !hasStrongEvidence(matches);
+}
+
 function buildHiddenWarningSummary(matches: SignalMatch[], outputLanguage: OutputLanguage) {
   if (matches.length === 0) {
     return outputLanguage === "ko"
       ? "뚜렷한 숨은 경고 표현은 아직 감지되지 않았습니다."
       : "No strong hidden warning pattern was detected yet.";
+  }
+
+  if (shouldUseCautiousSummary(matches)) {
+    const match = matches[0];
+    return outputLanguage === "ko"
+      ? `주의 신호: "${match.phrase}"는 ${match.signal.meaning} 다만 단일 표현만으로 강한 경고를 단정하지 않습니다.`
+      : `Caution signal: "${match.phrase}" may mean ${match.signal.meaning} Do not treat one phrase alone as a strong warning.`;
   }
 
   const meanings = matches

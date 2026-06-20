@@ -35,4 +35,18 @@ describe("local analyzer contract", () => {
     expect(report.confidenceScore).toBeLessThanOrEqual(32);
     expect(report.hiddenWarningSummary).toBe("No strong hidden warning pattern was detected yet.");
   });
+
+  it("keeps a single soft warning cautious", () => {
+    const report = analyzeReview({
+      reviewText: "굳이 추천하진 않아요. 위치는 편했고 직원은 친절했습니다.",
+      mode: "traveler",
+      businessType: "hotel",
+      outputLanguage: "ko"
+    });
+
+    expect(report.severityScore).toBeLessThanOrEqual(3);
+    expect(report.confidenceScore).toBeLessThanOrEqual(55);
+    expect(report.hiddenWarningSummary).toContain("주의 신호");
+    expect(report.hiddenWarningSummary).toContain("단정하지 않습니다");
+  });
 });

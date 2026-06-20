@@ -347,6 +347,35 @@ textarea:focus {
   color: #265b55;
 }
 
+.pilot-cue {
+  align-items: center;
+  background: #fbfbf8;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 12px;
+}
+
+.pilot-cue strong {
+  color: var(--accent-strong);
+  font-size: 13px;
+}
+
+.pilot-cue span {
+  color: #35433c;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.pilot-cue a {
+  color: var(--accent-strong);
+  font-size: 13px;
+  font-weight: 850;
+  text-decoration: none;
+}
+
 .error {
   background: #fef3f2;
   color: var(--risk);
