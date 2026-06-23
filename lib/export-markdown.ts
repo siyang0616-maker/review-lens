@@ -10,13 +10,13 @@ export function reportToMarkdown(report: AnalysisReport) {
   const actions = report.businessOwnerActions.map((action) => `- ${action}`).join("\n");
   const limitations = report.limitations.map((item) => `- ${item}`).join("\n");
 
-  return `# Review Lens Report
+  return `# Review-to-Revenue AI Report
 
-## Hidden Warning Summary
+## Revenue Signal Summary
 
 ${report.hiddenWarningSummary}
 
-## Native-Speaker Meaning
+## Customer Meaning
 
 ${report.nativeSpeakerMeaning}
 
@@ -28,19 +28,19 @@ ${report.normalizedReview}
 
 ${report.naturalTranslation}
 
-## Risk Categories
+## Revenue Risk Categories
 
 ${risks}
 
-## Traveler Advice
+## Buyer-Side Advice
 
 ${report.travelerAdvice}
 
-## Business Owner Actions
+## Weekly Revenue Actions
 
 ${actions}
 
-## Suggested Reply Draft
+## Follow-Up Message Draft
 
 ${report.suggestedReplyDraft}
 

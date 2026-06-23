@@ -1,6 +1,6 @@
-# Review Lens Expert Positioning
+# Review-to-Revenue AI Expert Positioning
 
-목표: Review Lens를 "신기한 AI 도구"가 아니라 돈을 낼 명분이 있는 제품으로 만든다.
+목표: Review-to-Revenue AI를 "신기한 AI 도구"가 아니라 돈을 낼 명분이 있는 제품으로 만든다.
 
 ## 핵심 전환
 

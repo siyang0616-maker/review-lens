@@ -1,8 +1,8 @@
-# Review Lens Trust and Conversion Pass Implementation Plan
+# Review-to-Revenue AI Trust and Conversion Pass Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Make today's Review Lens changes improve trust and validation speed without spending OpenAI credits.
+**Goal:** Make today's Review-to-Revenue AI changes improve trust and validation speed without spending OpenAI credits.
 
 **Architecture:** Keep the paste-first MVP intact. Add one local analyzer safety gate for weak evidence, then tighten the first-screen CTA copy so users understand the next action before running analysis. No live AI calls, no scraping, no database, no payment flow.
 

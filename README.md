@@ -1,8 +1,96 @@
-# Review Lens
+# Review-to-Revenue AI
 
-Review Lens is a paste-first MVP that explains the hidden meaning of travel and local-business reviews: native-language warning signals, intentional misspellings, slang, cultural nuance, traveler advice, and business owner action items.
+Review-to-Revenue AI turns customer voice into weekly revenue actions.
 
-## Run
+It is not a simple review summarizer, and it is not a CRM. The MVP reads reviews, inquiries, sales notes, competitor reviews, and lead CSV data, then produces the actions a B2B team can run this week: objections to remove, buying triggers to use, leads to rescue, content to publish, scripts to improve, and competitor weaknesses to exploit.
+
+Korean positioning:
+
+> 고객의 말에서 이번 주 매출 액션을 찾아드립니다.
+
+## What Changed From the Previous Direction
+
+The old product direction was centered on interpreting review language. That logic still exists as a lower-level signal layer, but the user-facing product now points at revenue work:
+
+- Customer objections become follow-up material.
+- Buying triggers become sales and content angles.
+- Hesitation reasons become rescue opportunities.
+- Competitor complaints become differentiation messages.
+- Repeated questions become publishable content.
+- Weak sales notes become script improvements.
+
+## Core Problem
+
+Sales and growth teams already have customer text, but it is scattered across reviews, DMs, inquiry forms, call notes, spreadsheets, and competitor pages. The missing workflow is not another place to store it. The missing workflow is a weekly brief that says:
+
+- What is blocking revenue right now?
+- Which leads should we follow up today?
+- What message should we send?
+- What content should we publish?
+- Which part of the sales script is leaking trust?
+
+## Target Users
+
+- B2B service teams handling inbound leads
+- Franchise and consulting sales teams
+- Agencies reviewing customer voice for clients
+- Founders who need fast signal from messy text
+- Growth marketers looking for proof-backed content ideas
+
+## MVP Features
+
+- First screen: `This Week’s Revenue Signals`
+- Six revenue signal cards:
+  - `Top Customer Objection`
+  - `Top Buying Trigger`
+  - `Leads to Rescue`
+  - `Content to Publish`
+  - `Script to Improve`
+  - `Competitor Weakness`
+- Input workspace:
+  - `reviewsText`
+  - `salesNotesText`
+  - `competitorReviewsText`
+  - `leadCsv`
+- Output sections:
+  - Dashboard
+  - Detailed Report
+  - Follow-up Message Library
+  - Content Ideas
+  - Sales Script Suggestions
+  - Markdown export
+  - PDF print through browser print
+  - Rescue lead CSV export
+- Local storage persistence
+- Rule/template-based analysis without external API calls
+- Mobile-friendly B2B SaaS interface
+
+## Analysis Schema
+
+Core types live in `types/revenue.ts`.
+
+Main result shape:
+
+- `painPoints`
+- `buyingTriggers`
+- `objections`
+- `trustBarriers`
+- `competitorWeaknesses`
+- `leadRescueOpportunities`
+- `contentIdeas`
+- `followupMessages`
+- `salesScriptSuggestions`
+- `weeklyActionPlan`
+- `revenueSignals`
+
+Analysis modules:
+
+- `lib/analysis/revenueSignalEngine.ts`: local rule-based analysis and scoring
+- `lib/analysis/lensEngine.ts`: lower-level interpretation signal extraction
+- `lib/analysis/reportBuilder.ts`: Markdown report generation
+- `lib/analysis/sampleData.ts`: sample franchise/high-ticket consultation dataset
+
+## Run Locally
 
 ```bash
 npm install
@@ -11,38 +99,68 @@ npm run dev
 
 Open `http://localhost:3000`.
 
-## Operating Loop
-
-Use `OPERATING_LOOP.md` when continuing without a detailed prompt. It tells Codex how to separate blocked work from unblocked work, choose the next highest-value task, verify changes, and update roadmap docs.
+## Verify
 
 ```bash
-npm run loop
+npm run test
+npm run typecheck
+npm run build
+npm run check
 ```
 
-## MVP Scope
+`npm run check` runs typecheck, tests, and production build.
 
-- No login
-- No database
-- No Google scraping
-- No automatic review replies
-- User-pasted reviews only
-- Rule-based hidden-signal analysis first, AI-backed analysis later
+## Export
 
-## Optional AI Analyzer
+The app supports:
 
-The app works without an API key. To enable the AI-backed JSON analyzer, create `.env.local`:
+- Markdown report download
+- Markdown copy
+- Browser print for PDF
+- Lead rescue CSV export
 
-```bash
-OPENAI_API_KEY=your_api_key_here
-OPENAI_MODEL=gpt-5.5
-```
+## Future AI Integration
 
-The API route still keeps the local analyzer as a fallback. If the OpenAI request fails or returns invalid JSON, the app returns the local rule-based result with a limitation note.
+The current MVP intentionally avoids external API usage. This keeps development cheap and validation fast.
 
-## Key Files
+Future OpenAI integration should plug into the same analysis boundary:
 
-- `app/page.tsx`: main Review Lens interface
-- `app/api/analyze/route.ts`: analysis endpoint
-- `lib/analyze.ts`: local analyzer pipeline
-- `lib/hidden-signals.ts`: first hidden-signal dictionary
-- `types/analysis.ts`: report schema
+- Keep `AnalysisResult` stable.
+- Add an `analysisService` adapter around the current local engine.
+- Let OpenAI enrich evidence, copy, and prioritization.
+- Keep the local rule engine as fallback and regression baseline.
+
+## Future Integrations
+
+Do not build these before validation:
+
+- CRM sync
+- Supabase persistence
+- Stripe billing
+- WhatsApp/Kakao/Instagram DM import
+- Review scraping
+- Multi-user workspaces
+
+Likely next integrations after validation:
+
+- CSV import polish
+- Saved workspaces
+- CRM export
+- OpenAI-backed analysis
+- PDF report template
+- Team feedback loop
+
+## Limitations
+
+- Current analysis is rule/template-based.
+- CSV parsing is intentionally lightweight.
+- No external data is fetched.
+- Results should be validated against real customer conversations before automating decisions.
+
+## Product Docs
+
+- `docs/PRODUCT_STRATEGY.md`
+- `docs/ROADMAP.md`
+- `docs/VALIDATION_PLAN.md`
+- `docs/SAMPLE_REPORT.md`
+- `docs/AI_PROMPTS.md`

@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Review Lens",
-  description: "Understand what native reviewers really mean, not just what they wrote."
+  title: "Review-to-Revenue AI",
+  description: "Turn customer reviews, inquiries, and sales notes into weekly revenue actions."
 };
 
 export default function RootLayout({

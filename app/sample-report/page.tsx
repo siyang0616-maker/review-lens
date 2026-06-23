@@ -72,9 +72,9 @@ const proofPoints = [
 ];
 
 const purchaseReasons = [
-  "$49는 광고비가 아니라 예약 전 이탈을 부르는 문장 3개를 이번 주에 고치는 비용입니다. 객실 1박만 지켜도 회수됩니다.",
-  "외국어 리뷰의 완곡한 불만은 평점보다 늦게 보입니다. 늦게 알아차리면 다음 예약 전환에서 손해가 납니다.",
-  "직원에게 바로 공유할 체크리스트와 답글 초안까지 포함해 사장이 다시 정리할 시간을 줄입니다."
+  "$49는 광고비가 아니라 이번 주 놓치고 있는 반박, 구매 동기, follow-up 기회를 찾는 비용입니다.",
+  "고객의 말 속 구매 망설임은 CRM 필드보다 먼저 나타납니다. 늦게 알아차리면 다음 상담과 콘텐츠에서 계속 손해가 납니다.",
+  "팀에게 바로 공유할 액션 플랜, follow-up 메시지, 콘텐츠 아이디어까지 포함해 다시 정리할 시간을 줄입니다."
 ];
 
 const evidenceRows = [
@@ -138,7 +138,7 @@ export default function SampleReportPage() {
         <div className="topbar-inner">
           <a className="brand brand-link" href="/">
             <span className="brand-mark">L</span>
-            <span>Review Lens</span>
+            <span>Review-to-Revenue AI</span>
           </a>
           <a className="top-link" href="/">
             Analyzer
@@ -155,10 +155,10 @@ export default function SampleReportPage() {
       <section className="report-hero">
         <div>
           <p className="eyebrow">Sample B2B report</p>
-          <h1>외국어 리뷰 속 숨은 불만 리포트</h1>
+          <h1>고객의 말에서 뽑은 이번 주 매출 액션</h1>
           <p>
-            부티크 호텔과 게스트하우스 운영자를 위한 주간 리뷰 리스크 샘플입니다.
-            번역만으로 놓치기 쉬운 언어권별 경고 표현을 운영 액션으로 바꿉니다.
+            리뷰, 문의, 상담 메모를 바탕으로 고객 반박, 구매 동기, 이탈 이유,
+            follow-up 기회, 콘텐츠 아이디어를 한 주 실행 계획으로 바꿉니다.
           </p>
         </div>
         <div className="report-summary">
@@ -167,7 +167,7 @@ export default function SampleReportPage() {
             <strong>Last 90 days</strong>
           </div>
           <div>
-            <span>Hidden risk</span>
+            <span>Revenue signal</span>
             <strong>High</strong>
           </div>
           <div>
@@ -179,9 +179,9 @@ export default function SampleReportPage() {
 
       <section className="report-band">
         <div className="metric-grid">
-          <Metric label="Severity" value="5/5" note="강한 회피 경고 포함" />
-          <Metric label="Confidence" value="82" note="여러 언어권에서 반복" />
-          <Metric label="Revenue risk" value="High" note="예약 전환 저해 가능" />
+          <Metric label="Objection" value="5/5" note="강한 구매 반박 반복" />
+          <Metric label="Confidence" value="82" note="여러 고객 텍스트에서 반복" />
+          <Metric label="Revenue risk" value="High" note="상담/전환 저해 가능" />
           <Metric label="Owner action" value="3 fixes" note="오늘 바로 실행" />
         </div>
       </section>
@@ -189,11 +189,11 @@ export default function SampleReportPage() {
       <section className="offer-strip">
         <div>
           <p className="eyebrow">Pilot offer</p>
-          <h2>1회 외국어 리뷰 리스크 리포트</h2>
+          <h2>1회 고객 텍스트 매출 액션 리포트</h2>
           <p>
-            리뷰 30~100개를 붙여넣어 보내주면 숨은 경고, 반복 불만, 우선 개선 3가지,
-            답글 초안, 직원 체크리스트를 정리합니다. 객실 1박보다 작은 비용으로
-            예약 전 이탈을 부르는 문장부터 확인합니다.
+            고객 텍스트 30~100개를 붙여넣어 보내주면 반복 반박, 구매 트리거,
+            살릴 리드, 콘텐츠 아이디어, 상담 스크립트 개선안을 정리합니다.
+            이번 주 매출 액션부터 확인합니다.
           </p>
         </div>
         <div className="offer-price">

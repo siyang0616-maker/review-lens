@@ -1,16 +1,16 @@
-# Review Lens 프로젝트 구상안
+# Review-to-Revenue AI 프로젝트 구상안
 
 작성일: 2026-06-12
 
 ## 1. 결론
 
-이번 주 바로 착수할 1순위 프로젝트는 **Review Lens**다.
+이번 주 바로 착수할 1순위 프로젝트는 **Review-to-Revenue AI**다.
 
 한 줄 정의:
 
 > 번역기가 놓치는 해외 호텔/음식점 리뷰의 진짜 뜻, 숨은 경고, 은어, 발음 기반 오탈자, 문화적 뉘앙스를 AI가 복원하고 해석해주는 리뷰 렌즈.
 
-기존 `ReviewOps Lite`는 음식점/호텔 사장님용 운영 개선 도구로 좋지만, 시장에는 이미 리뷰 관리, 평판 관리, 답글 자동화, 감성 분석 도구가 많다. 반면 `Review Lens`의 핵심 기능인 **Native-Coded Review Decoder / Hidden Warning Detector**는 더 선명하다.
+기존 `ReviewOps Lite`는 음식점/호텔 사장님용 운영 개선 도구로 좋지만, 시장에는 이미 리뷰 관리, 평판 관리, 답글 자동화, 감성 분석 도구가 많다. 반면 `Review-to-Revenue AI`의 핵심 기능인 **Native-Coded Review Decoder / Hidden Warning Detector**는 더 선명하다.
 
 초기 포지션은 B2C로 열고, 수익은 B2B로 확장한다.
 
@@ -33,9 +33,9 @@
 
 이 기능들은 유용하지만 이미 경쟁자가 많고, 작은 사업자가 당장 돈을 낼 만큼 차별점이 약할 수 있다.
 
-### Review Lens의 차별점
+### Review-to-Revenue AI의 차별점
 
-Review Lens는 단순 번역이나 요약이 아니라, 다음 문제를 푼다.
+Review-to-Revenue AI는 단순 번역이나 요약이 아니라, 다음 문제를 푼다.
 
 - 같은 언어권 사람끼리만 알아듣는 경고 표현
 - 자동 번역기가 놓치는 비꼼, 완곡한 비추천, 은어
@@ -59,7 +59,7 @@ Review Lens는 단순 번역이나 요약이 아니라, 다음 문제를 푼다.
 
 관광, 숙박, 음식점 시장에서는 리뷰가 곧 구매 결정 데이터다. 사용자는 예약/방문 전에 Google 리뷰, Booking, Agoda, TripAdvisor, Yelp 등의 리뷰를 보고 판단한다. 사업자는 리뷰를 읽지만, 외국어 리뷰의 뉘앙스까지 파악하기 어렵다.
 
-Review Lens는 두 고객군을 동시에 건드릴 수 있다.
+Review-to-Revenue AI는 두 고객군을 동시에 건드릴 수 있다.
 
 | 고객군 | 니즈 | 지불 가능성 |
 |---|---|---|
@@ -92,7 +92,7 @@ Google Business Profile API는 검증된 사업장 리뷰 목록 조회와 답�
 
 | 후보 | 설명 | 장점 | 약점 | 이번 주 착수 적합도 |
 |---|---|---|---|---|
-| Review Lens | 숨은 리뷰 의미 해석기 | 차별점 강함, B2C 바이럴 가능, B2B 확장 가능 | 해석 품질 검수 필요 | 매우 높음 |
+| Review-to-Revenue AI | 숨은 리뷰 의미 해석기 | 차별점 강함, B2C 바이럴 가능, B2B 확장 가능 | 해석 품질 검수 필요 | 매우 높음 |
 | ReviewOps Lite | 리뷰를 운영 개선 체크리스트로 변환 | B2B 가치 명확, 기존 1차 MVP와 연결 쉬움 | 경쟁 많음, 메시지 흔해질 수 있음 | 높음 |
 | Guest Complaint Radar | 1~3점 리뷰만 분석 | 가치 제안 선명, 작은 MVP 쉬움 | 부정 리뷰 수가 적은 곳은 가치 제한 | 중간 |
 | Menu Review Doctor | 메뉴별 리뷰 분석 | 음식점 특화 마케팅 쉬움 | 호텔/여행자 확장 약함 | 중간 |
@@ -101,7 +101,7 @@ Google Business Profile API는 검증된 사업장 리뷰 목록 조회와 답�
 
 최종 우선순위:
 
-1. Review Lens
+1. Review-to-Revenue AI
 2. ReviewOps Lite
 3. Guest Complaint Radar
 4. Hotel Review Doctor 또는 Menu Review Doctor
@@ -113,7 +113,7 @@ Google Business Profile API는 검증된 사업장 리뷰 목록 조회와 답�
 
 ### 첫 화면
 
-- 제품명: Review Lens
+- 제품명: Review-to-Revenue AI
 - 입력: 리뷰 텍스트 붙여넣기
 - 모드 선택:
   - Traveler mode
@@ -276,7 +276,7 @@ Google Business Profile API는 검증된 사업장 리뷰 목록 조회와 답�
 
 1. `types/analysis.ts`
 2. `lib/hidden-signals.ts`
-3. `lib/prompts/review-lens.ts`
+3. `lib/prompts/review-to-revenue-ai.ts`
 4. `app/page.tsx`
 5. `app/api/analyze/route.ts`
 6. `components/analysis-form.tsx`
@@ -325,9 +325,9 @@ Google Business Profile API는 검증된 사업장 리뷰 목록 조회와 답�
 
 ## 13. 최종 판단
 
-바로 착수한다면 `Review Lens`가 가장 좋다.
+바로 착수한다면 `Review-to-Revenue AI`가 가장 좋다.
 
-`ReviewOps Lite`는 B2B 운영 개선 도구로 훌륭하지만, 첫 주에 시장 반응을 빠르게 보기에는 메시지가 약간 넓다. `Review Lens`는 첫 화면에서 바로 호기심과 효용이 발생한다.
+`ReviewOps Lite`는 B2B 운영 개선 도구로 훌륭하지만, 첫 주에 시장 반응을 빠르게 보기에는 메시지가 약간 넓다. `Review-to-Revenue AI`는 첫 화면에서 바로 호기심과 효용이 발생한다.
 
 첫 카피:
 

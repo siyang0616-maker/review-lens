@@ -57,7 +57,7 @@ if (!quotaBlocked) {
 }
 
 const output = [
-  "Review Lens Operating Loop",
+  "Review-to-Revenue AI Operating Loop",
   "",
   "Blocked:",
   ...(blocked.length ? blocked.map((item) => `- ${item}`) : ["- None detected from docs."]),
@@ -66,7 +66,7 @@ const output = [
   ...next.map((item, index) => `${index + 1}. ${item}`),
   "",
   "Recommended Codex prompt:",
-  "OPERATING_LOOP.md를 기준으로 Review Lens를 이어서 진행해줘. 막힌 일은 blocked로 두고, repo 안에서 할 수 있는 가장 높은 가치의 다음 작업을 골라 구현해. 끝나기 전에 npm run check를 실행하고 NEXT_STEPS.md와 ROADMAP.md를 업데이트해."
+  "OPERATING_LOOP.md를 기준으로 Review-to-Revenue AI를 이어서 진행해줘. 막힌 일은 blocked로 두고, repo 안에서 할 수 있는 가장 높은 가치의 다음 작업을 골라 구현해. 끝나기 전에 npm run check를 실행하고 NEXT_STEPS.md와 ROADMAP.md를 업데이트해."
 ];
 
 console.log(output.join("\n"));

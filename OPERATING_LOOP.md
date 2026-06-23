@@ -1,10 +1,10 @@
-# Review Lens Operating Loop
+# Review-to-Revenue AI Operating Loop
 
 이 파일은 Codex가 사용자의 추가 지시가 적어도 다음 단계로 움직이기 위한 운영 규칙이다.
 
 ## 목적
 
-Review Lens는 아직 구조 완성보다 시장 검증이 더 중요하다. 따라서 Codex는 매번 "무엇을 만들까"부터 다시 묻지 않고, 아래 루프를 따라 가장 높은 가치의 다음 작업을 고른다.
+Review-to-Revenue AI는 아직 구조 완성보다 시장 검증이 더 중요하다. 따라서 Codex는 매번 "무엇을 만들까"부터 다시 묻지 않고, 아래 루프를 따라 가장 높은 가치의 다음 작업을 고른다.
 
 ## 기본 루프
 
@@ -125,7 +125,7 @@ Codex는 아래 상황에서 멈추고 사용자 결정을 기다린다.
 새 Codex 세션에서는 이렇게 시작하면 된다.
 
 ```text
-OPERATING_LOOP.md를 기준으로 Review Lens를 이어서 진행해줘.
+OPERATING_LOOP.md를 기준으로 Review-to-Revenue AI를 이어서 진행해줘.
 막힌 일은 blocked로 두고, repo 안에서 할 수 있는 가장 높은 가치의 다음 작업을 골라 구현해.
 끝나기 전에 npm run check를 실행하고 NEXT_STEPS.md와 ROADMAP.md를 업데이트해.
 ```

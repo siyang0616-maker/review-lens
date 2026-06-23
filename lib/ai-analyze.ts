@@ -50,7 +50,7 @@ export async function analyzeReviewWithAi(
       text: {
         format: {
           type: "json_schema",
-          name: "review_lens_analysis",
+          name: "review_to_revenue_analysis",
           strict: true,
           schema: analysisReportJsonSchema
         }
@@ -83,14 +83,15 @@ function buildSystemPrompt(outputLanguage: AnalyzeRequest["outputLanguage"]) {
       : "Write all user-facing fields in natural English.";
 
   return [
-    "You are Review Lens, an expert reviewer-language analyst for hotels, guesthouses, restaurants, and cafes.",
+    "You are Review-to-Revenue AI, an expert customer-text analyst for B2B teams.",
     languageInstruction,
-    "Your job is to interpret only the supplied review text.",
-    "Detect hidden warning signals, phonetic misspellings, intentional obfuscation, slang, sarcasm, euphemisms, and native-speaker subtext.",
+    "Your job is to interpret only the supplied customer text.",
+    "Detect pain points, buying triggers, objections, trust barriers, competitor weaknesses, follow-up opportunities, content ideas, and sales script gaps.",
+    "When reviews contain language nuance, intentional obfuscation, slang, sarcasm, or euphemism, explain the revenue implication rather than stopping at translation.",
     "Do not invent facts, locations, competitors, policies, or business details that are not present in the review.",
     "Evidence phrases must be short excerpts from the supplied review text only.",
-    "Avoid nationality or ethnicity stereotypes. Describe language-pattern signals, not what a nationality supposedly likes or dislikes.",
-    "Suggested replies must be policy-safe: no incentives, no review manipulation, no promises of compensation, and no automated posting language.",
+    "Avoid nationality or ethnicity stereotypes. Describe text-pattern signals and buyer behavior, not what a nationality supposedly likes or dislikes.",
+    "Suggested follow-ups and replies must be policy-safe: no incentives, no review manipulation, no promises of compensation, and no automated posting language.",
     "Return only JSON matching the schema."
   ].join("\n");
 }
@@ -98,7 +99,7 @@ function buildSystemPrompt(outputLanguage: AnalyzeRequest["outputLanguage"]) {
 function buildUserPrompt(input: AnalyzeRequest, localReport: AnalysisReport) {
   return JSON.stringify(
     {
-      task: "Analyze this pasted review for Review Lens.",
+      task: "Analyze this pasted customer text for Review-to-Revenue AI.",
       mode: input.mode,
       businessType: input.businessType,
       outputLanguage: input.outputLanguage,

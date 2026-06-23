@@ -1,6 +1,6 @@
-# Review Lens Validation Kit
+# Review-to-Revenue AI Validation Kit
 
-목표: Review Lens가 "재미있는 데모"를 넘어서 여행자와 숙박업 운영자에게 실제 필요가 있는지 확인한다.
+목표: Review-to-Revenue AI가 "재미있는 데모"를 넘어서 여행자와 숙박업 운영자에게 실제 필요가 있는지 확인한다.
 
 ## 현재 판단
 
@@ -33,8 +33,8 @@
 1. 참가자 ID를 먼저 부여한다.
    - 예: `T-01`, `T-02`, `O-01`
 2. 일반 번역 결과만 먼저 보여주고 예약/운영 판단을 묻는다.
-3. 같은 리뷰를 Review Lens Analyzer에서 실행한다.
-4. 일반 번역만 봤을 때와 Review Lens 결과를 봤을 때 판단이 바뀌었는지 묻는다.
+3. 같은 리뷰를 Review-to-Revenue AI Analyzer에서 실행한다.
+4. 일반 번역만 봤을 때와 Review-to-Revenue AI 결과를 봤을 때 판단이 바뀌었는지 묻는다.
 5. 예시 리뷰 3개를 실행한다.
    - Korean coded
    - Japanese subtle
@@ -52,7 +52,7 @@
 ## 여행자 질문
 
 1. 이 결과가 번역기보다 더 도움이 된다고 느끼나요?
-2. 일반 번역만 봤을 때와 Review Lens 결과를 봤을 때 예약 판단이 바뀌었나요?
+2. 일반 번역만 봤을 때와 Review-to-Revenue AI 결과를 봤을 때 예약 판단이 바뀌었나요?
 3. 예약 전 이 정보를 보면 실제로 결정을 바꿀 가능성이 있나요?
 4. 어떤 문장이 근거로 가장 설득력 있었나요?
 5. 과하게 추측한다고 느껴지는 부분이 있었나요?
@@ -103,7 +103,7 @@
 세션 ID:
 실행한 예시:
 일반 번역만 본 판단:
-Review Lens 이후 바뀐 판단:
+Review-to-Revenue AI 이후 바뀐 판단:
 누른 피드백 버튼:
 가장 도움 된 문장:
 과해석 또는 헷갈린 부분:

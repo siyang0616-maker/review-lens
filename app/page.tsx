@@ -1,541 +1,631 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { buildRevenueMarkdownReport } from "@/lib/analysis/reportBuilder";
+import { analyzeRevenueSignals } from "@/lib/analysis/revenueSignalEngine";
+import { sampleCustomerVoiceInput } from "@/lib/analysis/sampleData";
 import type {
-  AnalysisMode,
-  AnalysisReport,
-  BusinessType,
-  OutputLanguage
-} from "@/types/analysis";
-import { reportToMarkdown } from "@/lib/export-markdown";
+  AnalysisResult,
+  ContentIdea,
+  CustomerVoiceInput,
+  FollowupMessage,
+  ImpactLevel,
+  InsightItem,
+  LeadRescueOpportunity,
+  RevenueSignal,
+  SalesScriptSuggestion,
+  UrgencyLevel,
+  WeeklyAction
+} from "@/types/revenue";
 
-const exampleReviews = [
-  {
-    label: "Korean coded",
-    businessType: "hotel" as BusinessType,
-    outputLanguage: "ko" as OutputLanguage,
-    text: "한국분들만 알아보게 쨕쪙하겠습니다. 이 숙쏘는 위치만 보고 예약하면 깨꼬생합니다. 빠퀴벌레 봤고 화장실도 뜨럽고 쩔때 오찌마세요."
-  },
-  {
-    label: "Japanese subtle",
-    businessType: "guesthouse" as BusinessType,
-    outputLanguage: "ko" as OutputLanguage,
-    text: "次はないかなと思いました。写真はきれいでしたが、部屋の清潔感に欠ける感じで、夜も少しうるさかったです。"
-  },
-  {
-    label: "Chinese warning",
-    businessType: "hotel" as BusinessType,
-    outputLanguage: "en" as OutputLanguage,
-    text: "避雷，别来。照片很好看但实际房间很旧，卫生间味道很重，不值这个价格。"
-  },
-  {
-    label: "English trap",
-    businessType: "restaurant" as BusinessType,
-    outputLanguage: "en" as OutputLanguage,
-    text: "It looked cute online, but it felt like a tourist trap. Overpriced food, sticky tables, and I would not go again."
-  }
+const storageKey = "reviewToRevenueWorkspace.v1";
+
+const emptyInput: CustomerVoiceInput = {
+  competitorReviewsText: "",
+  leadCsv: "",
+  reviewsText: "",
+  salesNotesText: ""
+};
+
+const revenueSignalLabels = [
+  "Top Customer Objection",
+  "Top Buying Trigger",
+  "Leads to Rescue",
+  "Content to Publish",
+  "Script to Improve",
+  "Competitor Weakness"
 ];
 
-const valueCards = [
-  {
-    label: "Risk, not translation",
-    title: "뜻보다 중요한 건 가도 되는지",
-    text: "번역문을 읽는 데서 끝나지 않고 청결, 소음, 사진 차이, 가격 불만 같은 예약 리스크로 정리합니다."
-  },
-  {
-    label: "Native warning",
-    title: "직역하면 약해지는 회피 신호",
-    text: "次はない, 避雷, 일부러 비튼 한글 후기처럼 원어민끼리 돌려 말하는 경고를 잡습니다."
-  },
-  {
-    label: "Evidence",
-    title: "근거 문장과 신뢰도 확인",
-    text: "왜 위험하다고 보는지 원문 표현, severity, confidence를 함께 보여줘 과해석을 줄입니다."
-  }
-];
-
-const sampleReview = exampleReviews[0].text;
-type FeedbackVote = "accurate" | "overinterpreted" | "missed_signal" | "weak_action";
+type SavedWorkspace = {
+  input: CustomerVoiceInput;
+  result: AnalysisResult | null;
+};
 
 export default function Home() {
-  const [reviewText, setReviewText] = useState(sampleReview);
-  const [mode, setMode] = useState<AnalysisMode>("traveler");
-  const [businessType, setBusinessType] = useState<BusinessType>("hotel");
-  const [outputLanguage, setOutputLanguage] = useState<OutputLanguage>("ko");
-  const [report, setReport] = useState<AnalysisReport | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [feedbackSaved, setFeedbackSaved] = useState<FeedbackVote | null>(null);
+  const [input, setInput] = useState<CustomerVoiceInput>(emptyInput);
+  const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [activeSignalId, setActiveSignalId] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [hasLoadedStorage, setHasLoadedStorage] = useState(false);
 
-  const markdown = useMemo(() => (report ? reportToMarkdown(report) : ""), [report]);
+  const canAnalyze = Object.values(input).some((value) => value.trim().length > 0);
+  const markdown = useMemo(
+    () => (result ? buildRevenueMarkdownReport(result) : ""),
+    [result]
+  );
+  const hasSignals = Boolean(result && result.revenueSignals.length > 0);
+  const activeSignal =
+    result?.revenueSignals.find((signal) => signal.id === activeSignalId) ??
+    result?.revenueSignals[0] ??
+    null;
 
-  async function handleAnalyze() {
-    setIsLoading(true);
-    setError("");
+  useEffect(() => {
+    const saved = window.localStorage.getItem(storageKey);
 
-    try {
-      const response = await fetch("/api/analyze", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          reviewText,
-          mode,
-          businessType,
-          outputLanguage
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error("분석 요청을 처리하지 못했습니다.");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved) as SavedWorkspace;
+        setInput(parsed.input ?? emptyInput);
+        setResult(parsed.result ?? null);
+        setActiveSignalId(parsed.result?.revenueSignals[0]?.id ?? null);
+      } catch {
+        window.localStorage.removeItem(storageKey);
       }
-
-      const nextReport = (await response.json()) as AnalysisReport;
-      setReport(nextReport);
-      setFeedbackSaved(null);
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "알 수 없는 오류가 발생했습니다.");
-    } finally {
-      setIsLoading(false);
     }
+
+    setHasLoadedStorage(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hasLoadedStorage) {
+      return;
+    }
+
+    window.localStorage.setItem(storageKey, JSON.stringify({ input, result }));
+  }, [hasLoadedStorage, input, result]);
+
+  function updateInput(field: keyof CustomerVoiceInput, value: string) {
+    setInput((current) => ({ ...current, [field]: value }));
   }
 
-  async function copyText(value: string) {
+  function runAnalysis(nextInput = input) {
+    const nextResult = analyzeRevenueSignals(nextInput);
+    setResult(nextResult);
+    setActiveSignalId(nextResult.revenueSignals[0]?.id ?? null);
+  }
+
+  function loadSampleData() {
+    setInput(sampleCustomerVoiceInput);
+    runAnalysis(sampleCustomerVoiceInput);
+  }
+
+  function clearWorkspace() {
+    setInput(emptyInput);
+    setResult(null);
+    setActiveSignalId(null);
+    setCopiedId(null);
+    window.localStorage.removeItem(storageKey);
+  }
+
+  async function copyText(value: string, id: string) {
     await navigator.clipboard.writeText(value);
-  }
-
-  function loadExample(example: (typeof exampleReviews)[number]) {
-    setReviewText(example.text);
-    setBusinessType(example.businessType);
-    setOutputLanguage(example.outputLanguage);
-    setReport(null);
-    setError("");
-    setFeedbackSaved(null);
+    setCopiedId(id);
+    window.setTimeout(() => setCopiedId(null), 1600);
   }
 
   function downloadMarkdown() {
-    if (!report) {
+    if (!result) {
       return;
     }
 
-    const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `review-lens-report-${new Date().toISOString().slice(0, 10)}.md`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
+    downloadFile(
+      `review-to-revenue-report-${new Date().toISOString().slice(0, 10)}.md`,
+      markdown,
+      "text/markdown;charset=utf-8"
+    );
   }
 
-  function saveFeedback(vote: FeedbackVote) {
-    if (!report) {
+  function downloadLeadCsv() {
+    if (!result) {
       return;
     }
 
-    const entry = {
-      createdAt: new Date().toISOString(),
-      vote,
-      mode,
-      businessType,
-      outputLanguage,
-      reviewText,
-      reportSummary: {
-        analysisSource: report.analysisSource ?? "local",
-        detectedLanguage: report.detectedLanguage,
-        severityScore: report.severityScore,
-        confidenceScore: report.confidenceScore,
-        evidencePhrases: report.evidencePhrases,
-        hiddenWarningSummary: report.hiddenWarningSummary
-      }
-    };
-    const key = "reviewLensFeedback.v1";
-    const existing = JSON.parse(localStorage.getItem(key) ?? "[]") as unknown[];
+    const rows = [
+      ["leadName", "score", "urgency", "expectedValue", "reason", "recommendedMessage"],
+      ...result.leadRescueOpportunities.map((lead) => [
+        lead.leadName,
+        String(lead.score),
+        lead.urgencyLevel,
+        lead.expectedValue,
+        lead.rescueReason,
+        lead.recommendedMessage
+      ])
+    ];
 
-    localStorage.setItem(key, JSON.stringify([entry, ...existing].slice(0, 50)));
-    setFeedbackSaved(vote);
+    downloadFile(
+      `lead-rescue-opportunities-${new Date().toISOString().slice(0, 10)}.csv`,
+      rows.map((row) => row.map(csvEscape).join(",")).join("\n"),
+      "text/csv;charset=utf-8"
+    );
   }
 
   return (
-    <main className="shell">
-      <header className="topbar">
-        <div className="topbar-inner">
-          <div className="brand">
-            <span className="brand-mark">L</span>
-            <span>Review Lens</span>
-          </div>
-          <div className="topbar-actions">
-            <a className="top-link" href="/sample-report">
-              Sample report
-            </a>
-            <a className="top-link" href="/feedback">
-              Feedback
-            </a>
-            <a className="top-link" href="/validation-kit">
-              Validation
-            </a>
-            <div className="status">Booking risk decoder</div>
-          </div>
-        </div>
+    <main className="revenue-shell">
+      <header className="revenue-topbar">
+        <a className="revenue-brand" href="#signals" aria-label="Review-to-Revenue AI home">
+          <span className="revenue-brand-mark">R</span>
+          <span>Review-to-Revenue AI</span>
+        </a>
+        <nav className="revenue-nav" aria-label="Product sections">
+          <a href="#signals">Signals</a>
+          <a href="#input">Input</a>
+          <a href="#report">Report</a>
+          <a href="#followups">Follow-ups</a>
+          <a href="#content">Content</a>
+          <a href="#scripts">Scripts</a>
+          <a href="#export">Export</a>
+        </nav>
       </header>
 
-      <div className="workspace">
-        <section>
-          <div className="intro">
-            <p className="eyebrow">Hidden booking risk decoder</p>
-            <h1>해외 숙소 리뷰, 번역해도 찜찜할 때</h1>
+      <section className="revenue-hero" id="signals">
+        <div className="hero-copy">
+          <p className="revenue-eyebrow">Customer voice to revenue action</p>
+          <h1>This Week’s Revenue Signals</h1>
+          <p>
+            고객의 말에서 이번 주 매출 액션을 찾아드립니다. 리뷰, 문의, 상담 메모,
+            경쟁사 리뷰, 리드 CSV를 붙여넣으면 반박, 구매 동기, 살릴 리드, 콘텐츠,
+            상담 스크립트 개선안을 한 번에 정리합니다.
+          </p>
+          <div className="hero-actions">
+            <button className="primary-action" onClick={() => runAnalysis()} type="button">
+              Generate Revenue Signals
+            </button>
+            <button className="secondary-action" onClick={loadSampleData} type="button">
+              Load sample data
+            </button>
+            <button className="ghost-action" onClick={clearWorkspace} type="button">
+              Clear
+            </button>
+          </div>
+        </div>
+
+        <div className="hero-brief">
+          <span>이번 주 브리핑</span>
+          <strong>{hasSignals ? result?.summary : "Load sample data or paste customer voice data to generate signals"}</strong>
+          {result ? (
+            <div className="brief-stats">
+              <Metric label="Reviews" value={result.inputSummary.reviewLines} />
+              <Metric label="Notes" value={result.inputSummary.salesNoteLines} />
+              <Metric label="Leads" value={result.inputSummary.leadRows} />
+            </div>
+          ) : null}
+        </div>
+      </section>
+
+      <section className="section-band signal-band" aria-label="Revenue signals">
+        {hasSignals && result ? (
+          <>
+            <div className="signal-grid">
+              {result.revenueSignals.map((signal) => (
+                <SignalCard
+                  isActive={signal.id === activeSignal?.id}
+                  key={signal.id}
+                  onSelect={() => setActiveSignalId(signal.id)}
+                  signal={signal}
+                />
+              ))}
+            </div>
+
+            {activeSignal ? (
+              <div className="signal-detail">
+                <div>
+                  <p className="revenue-eyebrow">Selected signal</p>
+                  <h2>{activeSignal.title}</h2>
+                  <p>{activeSignal.whyItMatters}</p>
+                </div>
+                <div className="detail-grid">
+                  <div>
+                    <span>Evidence</span>
+                    <strong>{activeSignal.evidenceSnippet}</strong>
+                  </div>
+                  <div>
+                    <span>Recommended action</span>
+                    <strong>{activeSignal.recommendedAction}</strong>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+          </>
+        ) : (
+          <div className="empty-revenue-state">
+            <h2>Load sample data or paste customer voice data to generate signals</h2>
             <p>
-              원어민만 알아보는 숨은 예약 위험을 뽑아드립니다. 번역문이 아니라
-              청결, 소음, 사진 차이, 가격 불만 같은 실제 판단 기준으로 바꿉니다.
+              지금은 외부 AI API 없이 샘플 분석 엔진으로 작동합니다. 실제 고객 텍스트를
+              붙여넣어도 브라우저 안에서만 분석하고 저장합니다.
             </p>
+            <div className="signal-placeholder-grid" aria-label="Revenue signal slots">
+              {revenueSignalLabels.map((label) => (
+                <span key={label}>{label}</span>
+              ))}
+            </div>
+            <button className="primary-action" onClick={loadSampleData} type="button">
+              See sample revenue brief
+            </button>
           </div>
+        )}
+      </section>
 
-          <div className="value-strip">
-            {valueCards.map((card) => (
-              <div className="value-card" key={card.label}>
-                <span>{card.label}</span>
-                <strong>{card.title}</strong>
-                <p>{card.text}</p>
-              </div>
-            ))}
-          </div>
+      <section className="section-band" id="input">
+        <SectionHeader
+          eyebrow="Input Workspace"
+          title="고객의 말을 네 종류로 붙여넣기"
+          text="리뷰 요약이 아니라 매출 액션을 뽑기 위해 고객 리뷰, 경쟁사 리뷰, 상담 메모, 리드 CSV를 함께 봅니다."
+        />
+        <div className="input-grid">
+          <TextAreaField
+            label="reviewsText"
+            onChange={(value) => updateInput("reviewsText", value)}
+            placeholder="고객 리뷰, 문의, DM, 카카오 상담 내용을 붙여넣으세요."
+            value={input.reviewsText}
+          />
+          <TextAreaField
+            label="competitorReviewsText"
+            onChange={(value) => updateInput("competitorReviewsText", value)}
+            placeholder="경쟁사 리뷰나 불만 문장을 붙여넣으세요."
+            value={input.competitorReviewsText}
+          />
+          <TextAreaField
+            label="salesNotesText"
+            onChange={(value) => updateInput("salesNotesText", value)}
+            placeholder="상담 메모를 줄 단위로 붙여넣으세요."
+            value={input.salesNotesText}
+          />
+          <TextAreaField
+            label="leadCsv"
+            onChange={(value) => updateInput("leadCsv", value)}
+            placeholder="name,budget,interest,status,days_since_last_contact,last_note"
+            value={input.leadCsv}
+          />
+        </div>
+        <div className="workspace-actions">
+          <button className="primary-action" disabled={!canAnalyze} onClick={() => runAnalysis()} type="button">
+            Analyze customer voice
+          </button>
+          <button className="secondary-action" onClick={loadSampleData} type="button">
+            Load sample data
+          </button>
+          <button className="ghost-action" onClick={clearWorkspace} type="button">
+            Reset workspace
+          </button>
+        </div>
+      </section>
 
-          <div className="panel">
-            <div className="field">
-              <span className="field-label">Mode</span>
-              <div className="segmented" aria-label="Analysis mode">
-                <button
-                  className={mode === "traveler" ? "active" : ""}
-                  onClick={() => setMode("traveler")}
-                  type="button"
-                >
-                  Traveler
-                </button>
-                <button
-                  className={mode === "business" ? "active" : ""}
-                  onClick={() => setMode("business")}
-                  type="button"
-                >
-                  Business
-                </button>
-              </div>
+      {result ? (
+        <>
+          <section className="section-band" id="report">
+            <SectionHeader
+              eyebrow="Detailed Report"
+              title="반복 신호를 매출 판단 기준으로 정리"
+              text={result.summary}
+            />
+            <div className="report-grid">
+              <InsightList items={result.objections} title="Customer Objections" />
+              <InsightList items={result.buyingTriggers} title="Buying Triggers" />
+              <InsightList items={result.painPoints} title="Pain Points" />
+              <InsightList items={result.trustBarriers} title="Trust Barriers" />
+              <InsightList items={result.competitorWeaknesses} title="Competitor Weaknesses" />
+              <LeadList leads={result.leadRescueOpportunities} />
             </div>
+            <WeeklyPlan actions={result.weeklyActionPlan} />
+          </section>
 
-            <div className="control-grid">
-              <div className="field">
-                <label htmlFor="businessType">Business type</label>
-                <select
-                  id="businessType"
-                  value={businessType}
-                  onChange={(event) => setBusinessType(event.target.value as BusinessType)}
-                >
-                  <option value="hotel">Hotel</option>
-                  <option value="guesthouse">Guesthouse</option>
-                  <option value="restaurant">Restaurant</option>
-                  <option value="cafe">Cafe</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-
-              <div className="field">
-                <label htmlFor="outputLanguage">Output</label>
-                <select
-                  id="outputLanguage"
-                  value={outputLanguage}
-                  onChange={(event) => setOutputLanguage(event.target.value as OutputLanguage)}
-                >
-                  <option value="ko">Korean</option>
-                  <option value="en">English</option>
-                </select>
-              </div>
+          <section className="section-band" id="followups">
+            <SectionHeader
+              eyebrow="Follow-up Message Library"
+              title="멈춘 리드를 다시 여는 메시지"
+              text="가족 상의, 가격 부담, 브랜드 비교, 자료 부족처럼 실제로 대화를 멈추게 만든 이유별로 메시지를 생성합니다."
+            />
+            <div className="message-grid">
+              {result.followupMessages.map((message) => (
+                <FollowupCard
+                  copiedId={copiedId}
+                  key={message.id}
+                  message={message}
+                  onCopy={copyText}
+                />
+              ))}
             </div>
+          </section>
 
-            <div className="field">
-              <label htmlFor="reviewText">Review text</label>
-              <div className="example-tabs" aria-label="Example reviews">
-                {exampleReviews.map((example) => (
-                  <button
-                    key={example.label}
-                    onClick={() => loadExample(example)}
-                    type="button"
-                  >
-                    {example.label}
-                  </button>
-                ))}
-              </div>
-              <textarea
-                id="reviewText"
-                value={reviewText}
-                onChange={(event) => setReviewText(event.target.value)}
-                placeholder="Paste one or more reviews..."
-              />
+          <section className="section-band" id="content">
+            <SectionHeader
+              eyebrow="Content Ideas"
+              title="반복 질문을 콘텐츠로 먼저 처리"
+              text="상담 전에 고객이 이미 궁금해하는 질문을 FAQ, 블로그, 짧은 영상, 세일즈 자료로 바꿉니다."
+            />
+            <div className="content-grid">
+              {result.contentIdeas.map((idea) => (
+                <ContentCard idea={idea} key={idea.id} />
+              ))}
             </div>
+          </section>
 
-            <div className="actions">
+          <section className="section-band" id="scripts">
+            <SectionHeader
+              eyebrow="Sales Script Suggestions"
+              title="설득보다 먼저 신뢰를 쌓는 상담 문장"
+              text="고객이 멈춘 지점을 기준으로 약한 상담 문장을 숫자, 근거, 리스크 해소 중심 문장으로 바꿉니다."
+            />
+            <div className="script-list">
+              {result.salesScriptSuggestions.map((suggestion) => (
+                <ScriptSuggestionCard key={suggestion.id} suggestion={suggestion} />
+              ))}
+            </div>
+          </section>
+
+          <section className="section-band export-band" id="export">
+            <SectionHeader
+              eyebrow="Report Export"
+              title="Markdown export와 PDF print"
+              text="팀 공유는 Markdown으로 저장하고, 고객 미팅용으로는 브라우저 인쇄를 사용해 PDF로 저장할 수 있습니다."
+            />
+            <div className="export-actions">
+              <button className="primary-action" onClick={downloadMarkdown} type="button">
+                Download Markdown
+              </button>
+              <button className="secondary-action" onClick={downloadLeadCsv} type="button">
+                Export rescue CSV
+              </button>
+              <button className="secondary-action" onClick={() => window.print()} type="button">
+                Print PDF
+              </button>
               <button
-                className="primary"
-                disabled={isLoading || reviewText.trim().length < 8}
-                onClick={handleAnalyze}
+                className="ghost-action"
+                onClick={() => copyText(markdown, "markdown")}
                 type="button"
               >
-                {isLoading ? "Analyzing..." : "숨은 예약 위험 30초 확인"}
-              </button>
-              <button className="secondary" onClick={() => setReviewText(sampleReview)} type="button">
-                샘플 결과 먼저 보기
+                {copiedId === "markdown" ? "Copied" : "Copy Markdown"}
               </button>
             </div>
-
-            {error ? <div className="error">{error}</div> : null}
-            <div className="hint">
-              MVP는 붙여넣기 텍스트만 분석합니다. Google 리뷰를 수집하거나 자동 답글을
-              게시하지 않습니다.
-            </div>
-            <div className="pilot-cue">
-              <strong>숙소 운영자라면</strong>
-              <span>리뷰 30개로 $49 파일럿 리포트 요청까지 검증합니다.</span>
-              <a href="/sample-report">파일럿 범위 보기</a>
-            </div>
-          </div>
-        </section>
-
-        <section className="result-panel">
-          {!report ? (
-            <div className="empty">
-              위험도 / 근거 문장 / 예약 전 확인할 것 / 사장님이 오늘 고칠 3가지가
-              여기에 표시됩니다.
-            </div>
-          ) : (
-            <>
-              <div className="result-header">
-                <div>
-                  <p className="result-title">Hidden Signal Report</p>
-                  <div className="result-meta">
-                    Language {report.detectedLanguage} · Evidence {report.evidencePhrases.length}
-                  </div>
-                </div>
-                <div className="result-actions">
-                  <span className={`source-pill ${report.analysisSource ?? "local"}`}>
-                    {sourceLabel(report)}
-                  </span>
-                  <button className="secondary" onClick={() => copyText(markdown)} type="button">
-                    Copy Markdown
-                  </button>
-                  <button className="secondary" onClick={downloadMarkdown} type="button">
-                    Download .md
-                  </button>
-                </div>
-              </div>
-
-              {report.confidenceScore < 55 ? (
-                <div className="quality-warning">
-                  Confidence is low. Treat this as a weak signal and compare more reviews
-                  before making a decision.
-                </div>
-              ) : null}
-
-              {report.severityScore >= 5 ? (
-                <div className="severity-warning">
-                  Strong hidden warning detected. Check the evidence phrases before acting.
-                </div>
-              ) : null}
-
-              <div className="score-row">
-                <div className="score">
-                  <div className="score-label">Severity</div>
-                  <div className="score-value">{report.severityScore}/5</div>
-                </div>
-                <div className="score">
-                  <div className="score-label">Confidence</div>
-                  <div className="score-value">{report.confidenceScore}</div>
-                </div>
-                <div className="score">
-                  <div className="score-label">Obfuscation</div>
-                  <div className="score-value">{report.obfuscationDetected ? "Yes" : "No"}</div>
-                </div>
-              </div>
-
-              <div className="sections">
-                <ReportSection title="Hidden warning summary" value={report.hiddenWarningSummary} />
-                <ReportSection title="Native-speaker meaning" value={report.nativeSpeakerMeaning} />
-                <ReportSection title="Normalized review" value={report.normalizedReview} />
-                <ReportSection title="Natural translation" value={report.naturalTranslation} />
-
-                <div className="section">
-                  <div className="section-head">
-                    <h2>Risk categories</h2>
-                    <button
-                      className="copy-button"
-                      onClick={() => copyText(JSON.stringify(report.riskCategories, null, 2))}
-                      type="button"
-                    >
-                      Copy
-                    </button>
-                  </div>
-                  <div className="risk-list">
-                    {report.riskCategories.map((risk) => (
-                      <div className="risk-item" key={risk.category}>
-                        <div className="risk-top">
-                          <span className="risk-category">{risk.category}</span>
-                          <span className="risk-severity">{risk.severity}/5</span>
-                        </div>
-                        <div className="quote">{risk.evidence.join(", ")}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="section">
-                  <div className="section-head">
-                    <h2>Evidence phrases</h2>
-                    <button
-                      className="copy-button"
-                      onClick={() => copyText(report.evidencePhrases.join("\n"))}
-                      type="button"
-                    >
-                      Copy
-                    </button>
-                  </div>
-                  <div className="chips">
-                    {report.evidencePhrases.map((phrase) => (
-                      <span className="chip" key={phrase}>
-                        {phrase}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                <ReportSection title="Traveler advice" value={report.travelerAdvice} />
-
-                <div className="section">
-                  <div className="section-head">
-                    <h2>Business owner actions</h2>
-                    <button
-                      className="copy-button"
-                      onClick={() => copyText(report.businessOwnerActions.join("\n"))}
-                      type="button"
-                    >
-                      Copy
-                    </button>
-                  </div>
-                  <ul>
-                    {report.businessOwnerActions.map((action) => (
-                      <li key={action}>{action}</li>
-                    ))}
-                  </ul>
-                </div>
-
-                <ReportSection title="Suggested reply draft" value={report.suggestedReplyDraft} />
-
-                <div className="feedback-panel">
-                  <div>
-                    <span>Quality feedback</span>
-                    <h2>이 해석이 맞았나요?</h2>
-                    <p>
-                      지금은 브라우저에만 저장됩니다. 실제 사용자 검증 전까지 어떤 결과가
-                      과해석인지, 어떤 신호를 놓쳤는지 모으기 위한 임시 장치입니다.
-                    </p>
-                  </div>
-                  <div className="feedback-actions">
-                    <button onClick={() => saveFeedback("accurate")} type="button">
-                      맞음
-                    </button>
-                    <button onClick={() => saveFeedback("overinterpreted")} type="button">
-                      과해석
-                    </button>
-                    <button onClick={() => saveFeedback("missed_signal")} type="button">
-                      신호 놓침
-                    </button>
-                    <button onClick={() => saveFeedback("weak_action")} type="button">
-                      액션 약함
-                    </button>
-                  </div>
-                  {feedbackSaved ? (
-                    <div className="feedback-saved">
-                      Saved: {feedbackLabel(feedbackSaved)}
-                    </div>
-                  ) : null}
-                </div>
-
-                <div className="b2b-cta">
-                  <div>
-                    <span>For hotel and guesthouse owners</span>
-                    <h2>리뷰 30~100개로 이번 주 먼저 고칠 3가지를 뽑아드립니다</h2>
-                    <p>
-                      48시간 안에 외국어 리뷰의 예약 전환 방해 신호, 우선 수정 3가지,
-                      답글 초안, 직원 체크리스트를 정리합니다. 1회 $49, 구독 없음.
-                    </p>
-                  </div>
-                  <div className="b2b-actions">
-                    <a className="primary-link" href="/sample-report">
-                      샘플 리포트 보기
-                    </a>
-                    <a
-                      className="secondary-link"
-                      href="mailto:hello@example.com?subject=Review%20Lens%201-time%20report"
-                    >
-                      1회 리포트 문의
-                    </a>
-                  </div>
-                </div>
-
-                <div className="section">
-                  <div className="section-head">
-                    <h2>Limitations</h2>
-                  </div>
-                  <ul>
-                    {report.limitations.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </>
-          )}
-        </section>
-      </div>
+            <pre className="markdown-preview">{markdown}</pre>
+          </section>
+        </>
+      ) : null}
     </main>
   );
 }
 
-function feedbackLabel(vote: FeedbackVote) {
-  const labels: Record<FeedbackVote, string> = {
-    accurate: "맞음",
-    missed_signal: "신호 놓침",
-    overinterpreted: "과해석",
-    weak_action: "액션 약함"
-  };
-
-  return labels[vote];
+function SignalCard({
+  isActive,
+  onSelect,
+  signal
+}: {
+  isActive: boolean;
+  onSelect: () => void;
+  signal: RevenueSignal;
+}) {
+  return (
+    <button className={`signal-card ${isActive ? "active" : ""}`} onClick={onSelect} type="button">
+      <span className="signal-label">{signal.label}</span>
+      <strong>{signal.title}</strong>
+      <p>{signal.whyItMatters}</p>
+      <div className="signal-evidence">{signal.evidenceSnippet}</div>
+      <div className="signal-action">{signal.recommendedAction}</div>
+      <div className="signal-metrics">
+        <Pill label="Confidence" value={`${signal.confidenceScore}`} tone="green" />
+        <Pill label="Urgency" value={levelLabel(signal.urgencyLevel)} tone={levelTone(signal.urgencyLevel)} />
+        <Pill label="Impact" value={levelLabel(signal.impactLevel)} tone={levelTone(signal.impactLevel)} />
+      </div>
+    </button>
+  );
 }
 
-function sourceLabel(report: AnalysisReport) {
-  if (report.analysisSource === "ai") {
-    return report.modelName ? `AI analyzer · ${report.modelName}` : "AI analyzer";
-  }
-
-  if (report.analysisSource === "ai_fallback") {
-    return "AI fallback · local result";
-  }
-
-  return "Local analyzer";
+function SectionHeader({ eyebrow, text, title }: { eyebrow: string; text: string; title: string }) {
+  return (
+    <div className="section-header">
+      <p className="revenue-eyebrow">{eyebrow}</p>
+      <h2>{title}</h2>
+      <p>{text}</p>
+    </div>
+  );
 }
 
-function ReportSection({ title, value }: { title: string; value: string }) {
-  async function copy() {
-    await navigator.clipboard.writeText(value);
+function TextAreaField({
+  label,
+  onChange,
+  placeholder,
+  value
+}: {
+  label: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  value: string;
+}) {
+  return (
+    <label className="revenue-field">
+      <span>{label}</span>
+      <textarea
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        value={value}
+      />
+    </label>
+  );
+}
+
+function InsightList({ items, title }: { items: InsightItem[]; title: string }) {
+  return (
+    <div className="report-panel">
+      <h3>{title}</h3>
+      {items.length === 0 ? (
+        <p className="quiet-text">No signal yet.</p>
+      ) : (
+        <ul className="insight-list">
+          {items.map((item) => (
+            <li key={item.id}>
+              <strong>{item.title}</strong>
+              <span>{item.explanation}</span>
+              <em>{item.evidence[0]}</em>
+              <small>{item.recommendedAction}</small>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function LeadList({ leads }: { leads: LeadRescueOpportunity[] }) {
+  return (
+    <div className="report-panel">
+      <h3>Lead Rescue Opportunities</h3>
+      {leads.length === 0 ? (
+        <p className="quiet-text">No rescue opportunity yet.</p>
+      ) : (
+        <ul className="lead-list">
+          {leads.map((lead) => (
+            <li key={lead.id}>
+              <div>
+                <strong>{lead.leadName}</strong>
+                <span>{lead.context}</span>
+              </div>
+              <Pill label="Score" value={`${lead.score}`} tone={levelTone(lead.urgencyLevel)} />
+              <small>{lead.rescueReason}</small>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function WeeklyPlan({ actions }: { actions: WeeklyAction[] }) {
+  if (actions.length === 0) {
+    return null;
   }
 
   return (
-    <div className="section">
-      <div className="section-head">
-        <h2>{title}</h2>
-        <button className="copy-button" onClick={copy} type="button">
-          Copy
-        </button>
+    <div className="weekly-plan">
+      <h3>Weekly Action Plan</h3>
+      <div className="weekly-grid">
+        {actions.map((action) => (
+          <div className="weekly-action" key={action.id}>
+            <span>P{action.priority}</span>
+            <strong>{action.action}</strong>
+            <p>{action.expectedOutcome}</p>
+            <small>
+              {action.owner} · {action.due}
+            </small>
+          </div>
+        ))}
       </div>
-      <p>{value}</p>
     </div>
   );
+}
+
+function FollowupCard({
+  copiedId,
+  message,
+  onCopy
+}: {
+  copiedId: string | null;
+  message: FollowupMessage;
+  onCopy: (value: string, id: string) => Promise<void>;
+}) {
+  return (
+    <article className="message-card">
+      <span>{message.scenario}</span>
+      <h3>{message.title}</h3>
+      <p>{message.message}</p>
+      <small>{message.evidence}</small>
+      <button className="secondary-action" onClick={() => onCopy(message.message, message.id)} type="button">
+        {copiedId === message.id ? "Copied" : "Copy message"}
+      </button>
+    </article>
+  );
+}
+
+function ContentCard({ idea }: { idea: ContentIdea }) {
+  return (
+    <article className="content-card">
+      <span>
+        P{idea.priority} · {idea.format}
+      </span>
+      <h3>{idea.title}</h3>
+      <p>{idea.hook}</p>
+      <small>{idea.whyNow}</small>
+      <strong>{idea.callToAction}</strong>
+    </article>
+  );
+}
+
+function ScriptSuggestionCard({ suggestion }: { suggestion: SalesScriptSuggestion }) {
+  return (
+    <article className="script-card">
+      <span>{suggestion.situation}</span>
+      <div className="script-lines">
+        <p>
+          <small>Weak</small>
+          {suggestion.weakLine}
+        </p>
+        <p>
+          <small>Improve</small>
+          {suggestion.improvedLine}
+        </p>
+      </div>
+      <strong>{suggestion.whyItWorks}</strong>
+    </article>
+  );
+}
+
+function Metric({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="brief-stat">
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
+  );
+}
+
+function Pill({
+  label,
+  tone,
+  value
+}: {
+  label: string;
+  tone: "green" | "amber" | "red" | "gray";
+  value: string;
+}) {
+  return (
+    <span className={`metric-pill ${tone}`}>
+      {label}: {value}
+    </span>
+  );
+}
+
+function downloadFile(filename: string, content: string, type: string) {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function csvEscape(value: string) {
+  return `"${value.replace(/"/g, "\"\"")}"`;
+}
+
+function levelLabel(level: UrgencyLevel | ImpactLevel) {
+  return level[0].toUpperCase() + level.slice(1);
+}
+
+function levelTone(level: UrgencyLevel | ImpactLevel): "green" | "amber" | "red" | "gray" {
+  if (level === "high") return "red";
+  if (level === "medium") return "amber";
+  if (level === "low") return "gray";
+  return "green";
 }

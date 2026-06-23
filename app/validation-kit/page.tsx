@@ -1,7 +1,7 @@
 const travelerQuestions = [
-  "이 결과가 번역기보다 더 도움이 된다고 느끼나요?",
-  "일반 번역만 봤을 때와 Review Lens 결과를 봤을 때 예약 판단이 바뀌었나요?",
-  "예약 전 이 정보를 보면 실제로 결정을 바꿀 가능성이 있나요?",
+  "이 결과가 일반 리뷰/상담 메모 요약보다 더 실행 가능하다고 느끼나요?",
+  "원문만 봤을 때와 Review-to-Revenue AI 결과를 봤을 때 이번 주 액션 판단이 바뀌었나요?",
+  "이 정보를 보면 실제 follow-up, 콘텐츠, 상담 스크립트를 바꿀 가능성이 있나요?",
   "어떤 문장이 근거로 가장 설득력 있었나요?",
   "과하게 추측한다고 느껴지는 부분이 있었나요?",
   "이 도구를 친구에게 보내고 싶을 만한 상황은 언제인가요?"
@@ -9,18 +9,18 @@ const travelerQuestions = [
 
 const ownerQuestions = [
   "이 리포트가 직원에게 공유할 만큼 실무적으로 보이나요?",
-  "본인 숙소 리뷰 30개로 유료 파일럿 리포트를 받아볼 수 있나요?",
+  "본인 고객 텍스트 30개로 유료 파일럿 리포트를 받아볼 수 있나요?",
   "결제나 승인 결정자는 본인인가요, 다른 사람인가요?",
   "먼저 고칠 3가지가 실제 운영 액션으로 충분히 구체적인가요?",
-  "외국어 리뷰에서 놓치던 불만을 발견했다는 느낌이 있나요?",
+  "고객의 말에서 놓치던 구매 반박이나 follow-up 기회를 발견했다는 느낌이 있나요?",
   "1회 리포트에 29~99달러를 낼 이유가 있나요?",
   "돈을 내지 않는다면 가장 큰 이유는 품질, 가격, 신뢰, 필요성 중 무엇인가요?"
 ];
 
 const interviewFlow = [
   "참가자 ID를 먼저 부여하고 traveler 또는 owner로 표시",
-  "일반 번역 결과만 먼저 보여주고 예약/운영 판단을 묻기",
-  "그다음 Analyzer에서 같은 리뷰를 실행하고 판단이 바뀌었는지 확인",
+  "원문 고객 텍스트만 먼저 보여주고 이번 주 액션 판단을 묻기",
+  "그다음 Analyzer에서 같은 텍스트를 실행하고 판단이 바뀌었는지 확인",
   "결과 하단의 품질 피드백 버튼 중 하나를 누르게 하기",
   "여행자는 예약 판단 질문, 사업자는 운영 액션 질문을 묻기",
   "/feedback에서 누적 반응을 확인하고 CSV로 저장",
@@ -56,31 +56,31 @@ const successSignals = [
 ];
 
 const screeningQuestions = [
-  "최근 12개월 안에 해외 숙소나 음식점을 예약/방문했나요?",
-  "예약 전에 외국어 리뷰를 직접 읽거나 번역해본 적이 있나요?",
-  "B2B라면 리뷰 관리 또는 운영 개선 의사결정에 관여하나요?",
-  "B2B라면 본인 숙소/매장의 최근 리뷰 30개를 제공할 수 있나요?"
+  "최근 12개월 안에 고객 리뷰, 문의, 상담 메모를 매출 개선에 활용해본 적이 있나요?",
+  "고객의 반박, 구매 동기, 이탈 이유를 따로 정리해본 적이 있나요?",
+  "B2B라면 세일즈, 마케팅, 운영 개선 의사결정에 관여하나요?",
+  "B2B라면 본인 사업의 고객 텍스트 30개를 제공할 수 있나요?"
 ];
 
 const offers = [
   {
     price: "$29",
     title: "Starter diagnosis",
-    detail: "리뷰 30개, 숨은 경고 요약, 먼저 고칠 3가지",
+    detail: "고객 텍스트 30개, 매출 신호 요약, 먼저 실행할 3가지",
     delivery: "24시간 내 1페이지 PDF/Markdown",
     buyerAction: "실제 리뷰 30개 제공 또는 선입금"
   },
   {
     price: "$49",
     title: "Pilot report",
-    detail: "리뷰 30~100개, 언어권별 신호, 답글 초안, 직원 체크리스트",
+    detail: "고객 텍스트 30~100개, 반박/트리거/follow-up, 메시지 초안, 실행 체크리스트",
     delivery: "48시간 내 2~3페이지 리포트",
     buyerAction: "유료 파일럿 승인 또는 결제 링크 요청"
   },
   {
     price: "$99",
     title: "Deep review",
-    detail: "리뷰 100개 이상, 반복 불만 지도, 7일 개선 계획, 재검토",
+    detail: "고객 텍스트 100개 이상, 반복 매출 신호 지도, 7일 개선 계획, 재검토",
     delivery: "72시간 내 리포트와 15분 설명",
     buyerAction: "운영자 미팅 예약 또는 견적 요청"
   }
@@ -93,7 +93,7 @@ export default function ValidationKitPage() {
         <div className="topbar-inner">
           <a className="brand brand-link" href="/">
             <span className="brand-mark">L</span>
-            <span>Review Lens</span>
+            <span>Review-to-Revenue AI</span>
           </a>
           <div className="topbar-actions">
             <a className="top-link" href="/">
@@ -115,7 +115,7 @@ export default function ValidationKitPage() {
           <h1>다음은 검증입니다</h1>
           <p>
             브레인스토밍과 1차 기획은 끝났습니다. 이제 확인할 것은 단순합니다.
-            여행자가 이 해석을 믿는지, 숙박업 운영자가 이 리포트에 돈을 낼 이유를
+            팀이 이 신호를 믿는지, 실제 follow-up과 콘텐츠, 상담 스크립트를 바꿀 이유를
             느끼는지 확인합니다.
           </p>
         </div>
@@ -149,18 +149,18 @@ export default function ValidationKitPage() {
           <section className="report-section">
             <h2>Interview Script</h2>
             <div className="script-block">
-              <strong>Traveler opener</strong>
+              <strong>Revenue team opener</strong>
               <p>
-                해외 숙소 리뷰를 번역해도 찜찜할 때, 원어민만 알아보는 숨은 경고를
-                해석해주는 도구를 만들고 있어요. 결과를 보고 예약 판단에 도움이 될지
+                고객 리뷰, 문의, 상담 메모에서 이번 주 매출 액션을 뽑아주는 도구를
+                만들고 있어요. 결과를 보고 follow-up, 콘텐츠, 상담 판단에 도움이 될지
                 솔직하게 말해주세요.
               </p>
             </div>
             <div className="script-block">
               <strong>Owner opener</strong>
               <p>
-                외국어 리뷰 속 숨은 불만을 정리해서 이번 주에 고칠 3가지를 뽑아주는
-                1회 리포트를 테스트 중입니다. 최근 리뷰 30개를 맡길 만큼 믿을 수 있는지,
+                고객의 말 속 반박, 구매 동기, 이탈 이유를 정리해서 이번 주 실행할
+                매출 액션을 뽑아주는 1회 리포트를 테스트 중입니다. 최근 고객 텍스트 30개를 맡길 만큼 믿을 수 있는지,
                 승인권자가 누구인지, $49 파일럿을 진행할 행동까지 냉정하게 봐주세요.
               </p>
             </div>
@@ -191,7 +191,7 @@ export default function ValidationKitPage() {
               <span>Date / person / type</span>
               <span>Session ID</span>
               <span>Baseline translation decision</span>
-              <span>Review Lens decision change</span>
+              <span>Review-to-Revenue AI action change</span>
               <span>Feedback button selected</span>
               <span>Most useful sentence</span>
               <span>Confusing or overinterpreted part</span>

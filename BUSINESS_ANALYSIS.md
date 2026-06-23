@@ -1,10 +1,10 @@
-# Review Lens Business Analysis
+# Review-to-Revenue AI Business Analysis
 
 작성일: 2026-06-15
 
 ## 결론
 
-Review Lens는 그대로 "리뷰 관리 SaaS"로 가면 사업성이 약하다. 이미 리뷰 모니터링, 답글, 감성 분석, 평판 관리 도구가 많고, 작은 호텔/음식점이 새로운 월 구독 SaaS를 바로 결제할 만큼 차별점이 충분히 보이지 않을 수 있다.
+Review-to-Revenue AI는 그대로 "리뷰 관리 SaaS"로 가면 사업성이 약하다. 이미 리뷰 모니터링, 답글, 감성 분석, 평판 관리 도구가 많고, 작은 호텔/음식점이 새로운 월 구독 SaaS를 바로 결제할 만큼 차별점이 충분히 보이지 않을 수 있다.
 
 하지만 아래처럼 좁히면 현실성이 있다.
 

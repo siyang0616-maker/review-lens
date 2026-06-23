@@ -1,10 +1,10 @@
-# Review Lens Quality Review
+# Review-to-Revenue AI Quality Review
 
 작성일: 2026-06-15
 
 ## 왜 이 파일이 필요한가
 
-Review Lens의 핵심 리스크는 "그럴듯하지만 근거가 약한 해석"이다. 사용자가 신뢰하려면 결과가 항상 아래 원칙을 지켜야 한다.
+Review-to-Revenue AI의 핵심 리스크는 "그럴듯하지만 근거가 약한 해석"이다. 사용자가 신뢰하려면 결과가 항상 아래 원칙을 지켜야 한다.
 
 ## 품질 원칙
 

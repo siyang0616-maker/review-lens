@@ -28,7 +28,7 @@ http://127.0.0.1:3000
 
 ## 현재까지 온 지점
 
-Review Lens는 현재 paste-first MVP까지 만들어졌다.
+Review-to-Revenue AI는 현재 paste-first MVP까지 만들어졌다.
 
 완료된 것:
 
@@ -117,7 +117,7 @@ http://127.0.0.1:3000/feedback
 ## 다음 Codex에게 줄 프롬프트
 
 ```text
-MACBOOK_NEXT_WORK.md와 ROADMAP.md를 기준으로 Review Lens를 이어서 진행해줘.
+MACBOOK_NEXT_WORK.md와 ROADMAP.md를 기준으로 Review-to-Revenue AI를 이어서 진행해줘.
 먼저 repo 상태와 NEXT_STEPS.md를 확인하고, 현재 가장 중요한 다음 작업을 네가 골라 구현해.
 우선순위는 실제 AI 분석 품질 확인, UI 예시 탭/신뢰도 경고, Markdown 다운로드, B2B 샘플 리포트 순서야.
 지금은 UI/B2B/피드백 페이지까지 완료됐고, OpenAI quota가 막혀 있으면 live AI 대신 `/feedback`과 외부 검증 준비를 진행해.

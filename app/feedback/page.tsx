@@ -21,7 +21,7 @@ type FeedbackEntry = {
   };
 };
 
-const storageKey = "reviewLensFeedback.v1";
+const storageKey = "reviewToRevenueFeedback.v1";
 
 const voteLabels: Record<FeedbackVote, string> = {
   accurate: "맞음",
@@ -54,7 +54,7 @@ export default function FeedbackPage() {
 
   function exportJson() {
     downloadFile(
-      "review-lens-feedback.json",
+      "review-to-revenue-ai-feedback.json",
       JSON.stringify(entries, null, 2),
       "application/json;charset=utf-8"
     );
@@ -93,7 +93,7 @@ export default function FeedbackPage() {
     );
 
     downloadFile(
-      "review-lens-feedback.csv",
+      "review-to-revenue-ai-feedback.csv",
       [header.map(csvCell), ...rows].map((row) => row.join(",")).join("\n"),
       "text/csv;charset=utf-8"
     );
@@ -110,7 +110,7 @@ export default function FeedbackPage() {
         <div className="topbar-inner">
           <a className="brand brand-link" href="/">
             <span className="brand-mark">L</span>
-            <span>Review Lens</span>
+            <span>Review-to-Revenue AI</span>
           </a>
           <div className="topbar-actions">
             <a className="top-link" href="/">

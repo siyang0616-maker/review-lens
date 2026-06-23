@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1400" height="900" viewBox="0 0 1400 900">
   <rect width="1400" height="900" fill="#f7f5ef"/>
-  <text x="70" y="82" font-family="Arial, 'Malgun Gothic', sans-serif" font-size="42" font-weight="800" fill="#17201b">Review Lens Roadmap</text>
+  <text x="70" y="82" font-family="Arial, 'Malgun Gothic', sans-serif" font-size="42" font-weight="800" fill="#17201b">Review-to-Revenue AI Roadmap</text>
   <text x="72" y="122" font-family="Arial, 'Malgun Gothic', sans-serif" font-size="20" fill="#667169">번역기가 놓치는 리뷰의 숨은 경고를 여행자 조언과 사업자 액션으로 바꾸는 MVP 로드맵</text>
 
   <defs>
