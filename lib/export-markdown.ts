@@ -10,9 +10,9 @@ export function reportToMarkdown(report: AnalysisReport) {
   const actions = report.businessOwnerActions.map((action) => `- ${action}`).join("\n");
   const limitations = report.limitations.map((item) => `- ${item}`).join("\n");
 
-  return `# Review-to-Revenue AI Report
+  return `# Review-to-Revenue Action Report
 
-## Revenue Signal Summary
+## Executive Summary
 
 ${report.hiddenWarningSummary}
 
@@ -36,7 +36,7 @@ ${risks}
 
 ${report.travelerAdvice}
 
-## Weekly Revenue Actions
+## This Week's Revenue Actions
 
 ${actions}
 

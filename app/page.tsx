@@ -1,21 +1,33 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import {
+  actionOutcomesStorageKey,
+  applyOutcomesToActions,
+  mergeActionOutcome,
+  summarizeActionOutcomes
+} from "@/lib/analysis/actionOutcomes";
+import { parseMoney } from "@/lib/analysis/money";
 import { buildRevenueMarkdownReport } from "@/lib/analysis/reportBuilder";
 import { analyzeRevenueSignals } from "@/lib/analysis/revenueSignalEngine";
-import { sampleCustomerVoiceInput } from "@/lib/analysis/sampleData";
+import {
+  demoDatasets,
+  hotelDemoInput,
+  inputForDemoDataset
+} from "@/src/lib/sampleData";
 import type {
+  ActionOutcome,
+  ActionStatus,
   AnalysisResult,
   ContentIdea,
   CustomerVoiceInput,
   FollowupMessage,
   ImpactLevel,
-  InsightItem,
-  LeadRescueOpportunity,
+  RevenueAction,
   RevenueSignal,
   SalesScriptSuggestion,
-  UrgencyLevel,
-  WeeklyAction
+  SupportedLanguage,
+  UrgencyLevel
 } from "@/types/revenue";
 
 const storageKey = "reviewToRevenueWorkspace.v1";
@@ -23,11 +35,19 @@ const storageKey = "reviewToRevenueWorkspace.v1";
 const emptyInput: CustomerVoiceInput = {
   competitorReviewsText: "",
   leadCsv: "",
+  outputLanguage: "en",
   reviewsText: "",
   salesNotesText: ""
 };
 
-const revenueSignalLabels = [
+type SavedWorkspace = {
+  input: CustomerVoiceInput;
+  result: AnalysisResult | null;
+  selectedDatasetId?: string;
+  outputLanguage?: SupportedLanguage;
+};
+
+const signalLabels = [
   "Top Customer Objection",
   "Top Buying Trigger",
   "Leads to Rescue",
@@ -36,40 +56,73 @@ const revenueSignalLabels = [
   "Competitor Weakness"
 ];
 
-type SavedWorkspace = {
-  input: CustomerVoiceInput;
-  result: AnalysisResult | null;
-};
-
 export default function Home() {
   const [input, setInput] = useState<CustomerVoiceInput>(emptyInput);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [activeSignalId, setActiveSignalId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [hasLoadedStorage, setHasLoadedStorage] = useState(false);
+  const [selectedDatasetId, setSelectedDatasetId] = useState(demoDatasets[0].id);
+  const [outputLanguage, setOutputLanguage] = useState<SupportedLanguage>("en");
+  const [actionOutcomes, setActionOutcomes] = useState<ActionOutcome[]>([]);
 
-  const canAnalyze = Object.values(input).some((value) => value.trim().length > 0);
-  const markdown = useMemo(
-    () => (result ? buildRevenueMarkdownReport(result) : ""),
-    [result]
+  const canAnalyze = [
+    input.competitorReviewsText,
+    input.leadCsv,
+    input.reviewsText,
+    input.salesNotesText
+  ].some((value) => value.trim().length > 0);
+  const revenueActions = useMemo(
+    () => applyOutcomesToActions(result?.revenueActions ?? [], actionOutcomes),
+    [actionOutcomes, result]
   );
-  const hasSignals = Boolean(result && result.revenueSignals.length > 0);
+  const outcomeSummary = useMemo(
+    () => summarizeActionOutcomes(revenueActions, actionOutcomes),
+    [actionOutcomes, revenueActions]
+  );
+  const markdown = useMemo(
+    () => (result ? buildRevenueMarkdownReport(result, { outcomeSummary }) : ""),
+    [outcomeSummary, result]
+  );
   const activeSignal =
     result?.revenueSignals.find((signal) => signal.id === activeSignalId) ??
     result?.revenueSignals[0] ??
     null;
+  const priorityActions = revenueActions.slice(0, 3);
+  const selectedDataset =
+    demoDatasets.find((dataset) => dataset.id === selectedDatasetId) ?? demoDatasets[0];
+  const revenueAtRisk = useMemo(
+    () =>
+      result?.leadRescueOpportunities.reduce(
+        (total, lead) => total + parseMoney(lead.potentialValue ?? lead.expectedValue),
+        0
+      ) ?? 0,
+    [result]
+  );
 
   useEffect(() => {
     const saved = window.localStorage.getItem(storageKey);
+    const savedOutcomes = window.localStorage.getItem(actionOutcomesStorageKey);
 
     if (saved) {
       try {
         const parsed = JSON.parse(saved) as SavedWorkspace;
+        const savedResult = isCompatibleAnalysisResult(parsed.result) ? parsed.result : null;
         setInput(parsed.input ?? emptyInput);
-        setResult(parsed.result ?? null);
-        setActiveSignalId(parsed.result?.revenueSignals[0]?.id ?? null);
+        setResult(savedResult);
+        setSelectedDatasetId(parsed.selectedDatasetId ?? demoDatasets[0].id);
+        setOutputLanguage(parsed.outputLanguage ?? parsed.input?.outputLanguage ?? "en");
+        setActiveSignalId(savedResult?.revenueSignals[0]?.id ?? null);
       } catch {
         window.localStorage.removeItem(storageKey);
+      }
+    }
+
+    if (savedOutcomes) {
+      try {
+        setActionOutcomes(JSON.parse(savedOutcomes) as ActionOutcome[]);
+      } catch {
+        window.localStorage.removeItem(actionOutcomesStorageKey);
       }
     }
 
@@ -81,30 +134,55 @@ export default function Home() {
       return;
     }
 
-    window.localStorage.setItem(storageKey, JSON.stringify({ input, result }));
-  }, [hasLoadedStorage, input, result]);
+    window.localStorage.setItem(
+      storageKey,
+      JSON.stringify({ input, outputLanguage, result, selectedDatasetId })
+    );
+  }, [hasLoadedStorage, input, outputLanguage, result, selectedDatasetId]);
+
+  useEffect(() => {
+    if (!hasLoadedStorage) {
+      return;
+    }
+
+    window.localStorage.setItem(actionOutcomesStorageKey, JSON.stringify(actionOutcomes));
+  }, [actionOutcomes, hasLoadedStorage]);
 
   function updateInput(field: keyof CustomerVoiceInput, value: string) {
     setInput((current) => ({ ...current, [field]: value }));
   }
 
   function runAnalysis(nextInput = input) {
-    const nextResult = analyzeRevenueSignals(nextInput);
+    const nextResult = analyzeRevenueSignals({ ...nextInput, outputLanguage });
+    setInput({ ...nextInput, outputLanguage });
     setResult(nextResult);
     setActiveSignalId(nextResult.revenueSignals[0]?.id ?? null);
   }
 
-  function loadSampleData() {
-    setInput(sampleCustomerVoiceInput);
-    runAnalysis(sampleCustomerVoiceInput);
+  function loadSelectedDemoDataset() {
+    const nextInput = {
+      ...inputForDemoDataset(selectedDatasetId),
+      outputLanguage
+    };
+    setInput(nextInput);
+    runAnalysis(nextInput);
+  }
+
+  function loadHotelDemoData() {
+    setSelectedDatasetId("korean-summer-hotel");
+    const nextInput = { ...hotelDemoInput, outputLanguage };
+    setInput(nextInput);
+    runAnalysis(nextInput);
   }
 
   function clearWorkspace() {
-    setInput(emptyInput);
+    setInput({ ...emptyInput, outputLanguage });
     setResult(null);
     setActiveSignalId(null);
     setCopiedId(null);
+    setActionOutcomes([]);
     window.localStorage.removeItem(storageKey);
+    window.localStorage.removeItem(actionOutcomesStorageKey);
   }
 
   async function copyText(value: string, id: string) {
@@ -113,13 +191,38 @@ export default function Home() {
     window.setTimeout(() => setCopiedId(null), 1600);
   }
 
+  async function copyActionMessage(action: RevenueAction) {
+    await copyText(action.suggestedMessage ?? action.recommendedAction, action.id);
+    recordOutcome(action.id, "copied");
+  }
+
+  function recordOutcome(actionId: string, status: Exclude<ActionStatus, "ready">) {
+    setActionOutcomes((current) =>
+      mergeActionOutcome(current, {
+        actionId,
+        status,
+        timestamp: new Date().toISOString()
+      })
+    );
+  }
+
+  function changeOutputLanguage(value: SupportedLanguage) {
+    setOutputLanguage(value);
+
+    if (result) {
+      runAnalysis({ ...input, outputLanguage: value });
+    } else {
+      setInput((current) => ({ ...current, outputLanguage: value }));
+    }
+  }
+
   function downloadMarkdown() {
     if (!result) {
       return;
     }
 
     downloadFile(
-      `review-to-revenue-report-${new Date().toISOString().slice(0, 10)}.md`,
+      `review-to-revenue-action-report-${new Date().toISOString().slice(0, 10)}.md`,
       markdown,
       "text/markdown;charset=utf-8"
     );
@@ -152,36 +255,47 @@ export default function Home() {
   return (
     <main className="revenue-shell">
       <header className="revenue-topbar">
-        <a className="revenue-brand" href="#signals" aria-label="Review-to-Revenue AI home">
+        <a className="revenue-brand" href="#actions" aria-label="Review-to-Revenue AI home">
           <span className="revenue-brand-mark">R</span>
           <span>Review-to-Revenue AI</span>
         </a>
         <nav className="revenue-nav" aria-label="Product sections">
+          <a href="#actions">Actions</a>
           <a href="#signals">Signals</a>
           <a href="#input">Input</a>
-          <a href="#report">Report</a>
-          <a href="#followups">Follow-ups</a>
-          <a href="#content">Content</a>
-          <a href="#scripts">Scripts</a>
+          <a href="#outcomes">Outcomes</a>
           <a href="#export">Export</a>
         </nav>
+        <label className="language-control">
+          <span>Output Language</span>
+          <select
+            onChange={(event) => changeOutputLanguage(event.target.value as SupportedLanguage)}
+            value={outputLanguage}
+          >
+            <option value="en">English</option>
+            <option value="ko">Korean</option>
+          </select>
+        </label>
       </header>
 
-      <section className="revenue-hero" id="signals">
+      <section className="revenue-hero action-hero" id="actions">
         <div className="hero-copy">
-          <p className="revenue-eyebrow">Customer voice to revenue action</p>
-          <h1>This Week’s Revenue Signals</h1>
+          <p className="revenue-eyebrow">Customer Voice → Revenue Action → Outcome Data</p>
+          <h1>{outputLanguage === "ko" ? "이번 주 매출 액션" : "This Week’s Revenue Actions"}</h1>
           <p>
-            고객의 말에서 이번 주 매출 액션을 찾아드립니다. 리뷰, 문의, 상담 메모,
-            경쟁사 리뷰, 리드 CSV를 붙여넣으면 반박, 구매 동기, 살릴 리드, 콘텐츠,
-            상담 스크립트 개선안을 한 번에 정리합니다.
+            Turn reviews, sales notes, and inquiries into follow-up messages, content ideas,
+            and script improvements you can execute this week.
+          </p>
+          <p className="korean-helper">
+            리뷰와 상담 메모에서 이번 주 바로 실행할 follow-up, 콘텐츠, 상담 스크립트 개선
+            액션을 뽑아드립니다.
           </p>
           <div className="hero-actions">
-            <button className="primary-action" onClick={() => runAnalysis()} type="button">
-              Generate Revenue Signals
+            <button className="primary-action" disabled={!canAnalyze} onClick={() => runAnalysis()} type="button">
+              Generate Revenue Actions
             </button>
-            <button className="secondary-action" onClick={loadSampleData} type="button">
-              Load sample data
+            <button className="secondary-action" onClick={loadSelectedDemoDataset} type="button">
+              Load Demo Dataset
             </button>
             <button className="ghost-action" onClick={clearWorkspace} type="button">
               Clear
@@ -189,22 +303,156 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="hero-brief">
-          <span>이번 주 브리핑</span>
-          <strong>{hasSignals ? result?.summary : "Load sample data or paste customer voice data to generate signals"}</strong>
-          {result ? (
-            <div className="brief-stats">
-              <Metric label="Reviews" value={result.inputSummary.reviewLines} />
-              <Metric label="Notes" value={result.inputSummary.salesNoteLines} />
-              <Metric label="Leads" value={result.inputSummary.leadRows} />
-            </div>
-          ) : null}
+        <div className="hero-side-panel">
+          {result?.demoLabel ? <span className="demo-badge">{result.demoLabel}</span> : null}
+          <div className="metric-card-grid">
+            <MetricCard label="Leads to Rescue" value={`${result?.leadRescueOpportunities.length ?? 0}`} />
+            <MetricCard label="Actions Ready" value={`${revenueActions.filter((action) => action.status === "ready").length}`} />
+            <MetricCard label="Revenue at Risk" value={formatCurrency(revenueAtRisk)} />
+          </div>
+          <p className="metric-note">
+            Estimated from lead CSV potentialValue. Not guaranteed revenue.
+          </p>
         </div>
       </section>
 
-      <section className="section-band signal-band" aria-label="Revenue signals">
-        {hasSignals && result ? (
-          <>
+      {!result ? (
+        <section className="section-band empty-revenue-state">
+          <h2>No customer voice data yet</h2>
+          <p>
+            Paste reviews, competitor reviews, sales notes, or lead CSV to generate revenue
+            actions. You can also load synthetic demo data to test the product experience.
+          </p>
+          <div className="signal-placeholder-grid" aria-label="Revenue action slots">
+            {signalLabels.map((label) => (
+              <span key={label}>{label}</span>
+            ))}
+          </div>
+          <div className="workspace-actions">
+            <button className="primary-action" onClick={loadSelectedDemoDataset} type="button">
+              Load Demo Dataset
+            </button>
+            <a className="secondary-action" href="#input">
+              Go to Input Workspace
+            </a>
+          </div>
+        </section>
+      ) : null}
+
+      {result ? (
+        <>
+          <section className="section-band action-board" aria-label="Today's Priority Actions">
+            <SectionHeader
+              eyebrow="Today’s Priority Actions"
+              title="Start with the actions most likely to recover revenue"
+              text="Each card is a recommended sales, content, script, or competitor-positioning action with outcome tracking."
+            />
+            <div className="priority-action-grid">
+              {priorityActions.map((action) => (
+                <RevenueActionCard
+                  action={action}
+                  copiedId={copiedId}
+                  key={action.id}
+                  onCopy={copyActionMessage}
+                  onStatus={recordOutcome}
+                />
+              ))}
+            </div>
+          </section>
+
+          <section className="section-band outcome-band" id="outcomes">
+            <SectionHeader
+              eyebrow="Outcome Tracking"
+              title="Track what happened after each revenue action"
+              text="Track what happened after you used each revenue action. This helps identify which customer language patterns actually convert."
+            />
+            <div className="outcome-grid">
+              <MetricCard label="Follow-ups copied" value={`${outcomeSummary.followupsCopied}`} />
+              <MetricCard label="Follow-ups sent" value={`${outcomeSummary.followupsSent}`} />
+              <MetricCard label="Replies recovered" value={`${outcomeSummary.repliesRecovered}`} />
+              <MetricCard label="Bookings recovered" value={`${outcomeSummary.bookingsRecovered}`} />
+              <MetricCard label="Won deals" value={`${outcomeSummary.wonDeals}`} />
+              <MetricCard
+                label="Estimated recovered revenue"
+                value={formatCurrency(outcomeSummary.estimatedRecoveredRevenue)}
+              />
+            </div>
+          </section>
+        </>
+      ) : null}
+
+      <section className="section-band" id="input">
+        <SectionHeader
+          eyebrow="Input Workspace"
+          title="Paste customer voice or load a synthetic demo dataset"
+          text="All demo datasets are synthetic sample data. They are for workflow testing, not scraped real reviews."
+        />
+        <div className="dataset-panel">
+          <label className="dataset-selector">
+            <span>Select demo dataset</span>
+            <select
+              onChange={(event) => setSelectedDatasetId(event.target.value)}
+              value={selectedDatasetId}
+            >
+              {demoDatasets.map((dataset) => (
+                <option key={dataset.id} value={dataset.id}>
+                  {dataset.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button className="primary-action" onClick={loadSelectedDemoDataset} type="button">
+            Load Demo Dataset
+          </button>
+          <button className="secondary-action" onClick={loadHotelDemoData} type="button">
+            Load Hotel Demo Data
+          </button>
+          <span className="demo-badge">{selectedDataset.demoLabel}</span>
+        </div>
+        <div className="input-grid">
+          <TextAreaField
+            label="reviewsText"
+            onChange={(value) => updateInput("reviewsText", value)}
+            placeholder="Paste customer reviews, inquiries, DMs, or chat notes."
+            value={input.reviewsText}
+          />
+          <TextAreaField
+            label="competitorReviewsText"
+            onChange={(value) => updateInput("competitorReviewsText", value)}
+            placeholder="Paste competitor reviews or complaints."
+            value={input.competitorReviewsText}
+          />
+          <TextAreaField
+            label="salesNotesText"
+            onChange={(value) => updateInput("salesNotesText", value)}
+            placeholder="Paste sales notes line by line."
+            value={input.salesNotesText}
+          />
+          <TextAreaField
+            label="leadCsv"
+            onChange={(value) => updateInput("leadCsv", value)}
+            placeholder="name,channel,industry,interest,budget,lastContactDate,lastMessage,status,objection,urgency,potentialValue,notes"
+            value={input.leadCsv}
+          />
+        </div>
+        <div className="workspace-actions">
+          <button className="primary-action" disabled={!canAnalyze} onClick={() => runAnalysis()} type="button">
+            Analyze customer voice
+          </button>
+          <button className="ghost-action" onClick={clearWorkspace} type="button">
+            Reset workspace
+          </button>
+        </div>
+      </section>
+
+      {result ? (
+        <>
+          <section className="section-band signal-band" id="signals" aria-label="Revenue signals">
+            <SectionHeader
+              eyebrow="Revenue Signal Cards"
+              title="Signals explain why each action matters"
+              text={result.summary}
+            />
             <div className="signal-grid">
               {result.revenueSignals.map((signal) => (
                 <SignalCard
@@ -215,7 +463,6 @@ export default function Home() {
                 />
               ))}
             </div>
-
             {activeSignal ? (
               <div className="signal-detail">
                 <div>
@@ -235,95 +482,13 @@ export default function Home() {
                 </div>
               </div>
             ) : null}
-          </>
-        ) : (
-          <div className="empty-revenue-state">
-            <h2>Load sample data or paste customer voice data to generate signals</h2>
-            <p>
-              지금은 외부 AI API 없이 샘플 분석 엔진으로 작동합니다. 실제 고객 텍스트를
-              붙여넣어도 브라우저 안에서만 분석하고 저장합니다.
-            </p>
-            <div className="signal-placeholder-grid" aria-label="Revenue signal slots">
-              {revenueSignalLabels.map((label) => (
-                <span key={label}>{label}</span>
-              ))}
-            </div>
-            <button className="primary-action" onClick={loadSampleData} type="button">
-              See sample revenue brief
-            </button>
-          </div>
-        )}
-      </section>
-
-      <section className="section-band" id="input">
-        <SectionHeader
-          eyebrow="Input Workspace"
-          title="고객의 말을 네 종류로 붙여넣기"
-          text="리뷰 요약이 아니라 매출 액션을 뽑기 위해 고객 리뷰, 경쟁사 리뷰, 상담 메모, 리드 CSV를 함께 봅니다."
-        />
-        <div className="input-grid">
-          <TextAreaField
-            label="reviewsText"
-            onChange={(value) => updateInput("reviewsText", value)}
-            placeholder="고객 리뷰, 문의, DM, 카카오 상담 내용을 붙여넣으세요."
-            value={input.reviewsText}
-          />
-          <TextAreaField
-            label="competitorReviewsText"
-            onChange={(value) => updateInput("competitorReviewsText", value)}
-            placeholder="경쟁사 리뷰나 불만 문장을 붙여넣으세요."
-            value={input.competitorReviewsText}
-          />
-          <TextAreaField
-            label="salesNotesText"
-            onChange={(value) => updateInput("salesNotesText", value)}
-            placeholder="상담 메모를 줄 단위로 붙여넣으세요."
-            value={input.salesNotesText}
-          />
-          <TextAreaField
-            label="leadCsv"
-            onChange={(value) => updateInput("leadCsv", value)}
-            placeholder="name,budget,interest,status,days_since_last_contact,last_note"
-            value={input.leadCsv}
-          />
-        </div>
-        <div className="workspace-actions">
-          <button className="primary-action" disabled={!canAnalyze} onClick={() => runAnalysis()} type="button">
-            Analyze customer voice
-          </button>
-          <button className="secondary-action" onClick={loadSampleData} type="button">
-            Load sample data
-          </button>
-          <button className="ghost-action" onClick={clearWorkspace} type="button">
-            Reset workspace
-          </button>
-        </div>
-      </section>
-
-      {result ? (
-        <>
-          <section className="section-band" id="report">
-            <SectionHeader
-              eyebrow="Detailed Report"
-              title="반복 신호를 매출 판단 기준으로 정리"
-              text={result.summary}
-            />
-            <div className="report-grid">
-              <InsightList items={result.objections} title="Customer Objections" />
-              <InsightList items={result.buyingTriggers} title="Buying Triggers" />
-              <InsightList items={result.painPoints} title="Pain Points" />
-              <InsightList items={result.trustBarriers} title="Trust Barriers" />
-              <InsightList items={result.competitorWeaknesses} title="Competitor Weaknesses" />
-              <LeadList leads={result.leadRescueOpportunities} />
-            </div>
-            <WeeklyPlan actions={result.weeklyActionPlan} />
           </section>
 
           <section className="section-band" id="followups">
             <SectionHeader
               eyebrow="Follow-up Message Library"
-              title="멈춘 리드를 다시 여는 메시지"
-              text="가족 상의, 가격 부담, 브랜드 비교, 자료 부족처럼 실제로 대화를 멈추게 만든 이유별로 메시지를 생성합니다."
+              title="Messages with a reason to re-open the conversation"
+              text="Each message ties back to a specific customer objection and includes a reason it should work."
             />
             <div className="message-grid">
               {result.followupMessages.map((message) => (
@@ -340,12 +505,12 @@ export default function Home() {
           <section className="section-band" id="content">
             <SectionHeader
               eyebrow="Content Ideas"
-              title="반복 질문을 콘텐츠로 먼저 처리"
-              text="상담 전에 고객이 이미 궁금해하는 질문을 FAQ, 블로그, 짧은 영상, 세일즈 자료로 바꿉니다."
+              title="Publish assets that remove repeated buying friction"
+              text="Each idea includes a hook, outline, target objection, and CTA."
             />
             <div className="content-grid">
               {result.contentIdeas.map((idea) => (
-                <ContentCard idea={idea} key={idea.id} />
+                <ContentCard copiedId={copiedId} idea={idea} key={idea.id} onCopy={copyText} />
               ))}
             </div>
           </section>
@@ -353,8 +518,8 @@ export default function Home() {
           <section className="section-band" id="scripts">
             <SectionHeader
               eyebrow="Sales Script Suggestions"
-              title="설득보다 먼저 신뢰를 쌓는 상담 문장"
-              text="고객이 멈춘 지점을 기준으로 약한 상담 문장을 숫자, 근거, 리스크 해소 중심 문장으로 바꿉니다."
+              title="Improve the line that leaks trust"
+              text="Move from generic persuasion to objection-specific decision support."
             />
             <div className="script-list">
               {result.salesScriptSuggestions.map((suggestion) => (
@@ -366,8 +531,8 @@ export default function Home() {
           <section className="section-band export-band" id="export">
             <SectionHeader
               eyebrow="Report Export"
-              title="Markdown export와 PDF print"
-              text="팀 공유는 Markdown으로 저장하고, 고객 미팅용으로는 브라우저 인쇄를 사용해 PDF로 저장할 수 있습니다."
+              title="Revenue Action Report"
+              text="Export the action board, message library, content ideas, script improvements, and outcome tracking summary."
             />
             <div className="export-actions">
               <button className="primary-action" onClick={downloadMarkdown} type="button">
@@ -395,6 +560,63 @@ export default function Home() {
   );
 }
 
+function RevenueActionCard({
+  action,
+  copiedId,
+  onCopy,
+  onStatus
+}: {
+  action: RevenueAction;
+  copiedId: string | null;
+  onCopy: (action: RevenueAction) => Promise<void>;
+  onStatus: (actionId: string, status: Exclude<ActionStatus, "ready">) => void;
+}) {
+  return (
+    <article className={`revenue-action-card ${action.priority}`}>
+      <div className="action-card-topline">
+        <span>{action.type.replace("_", " ")}</span>
+        <strong>{action.status}</strong>
+      </div>
+      <h3>{action.title}</h3>
+      <p>{action.targetSegment}</p>
+      <dl>
+        <div>
+          <dt>Why now</dt>
+          <dd>{action.whyNow}</dd>
+        </div>
+        <div>
+          <dt>Evidence</dt>
+          <dd>{action.evidence[0]}</dd>
+        </div>
+        <div>
+          <dt>Recommended action</dt>
+          <dd>{action.recommendedAction}</dd>
+        </div>
+      </dl>
+      <div className="action-button-row">
+        <button className="secondary-action compact" onClick={() => onCopy(action)} type="button">
+          {copiedId === action.id ? "Copied" : "Copy message"}
+        </button>
+        <button className="ghost-action compact" onClick={() => onStatus(action.id, "sent")} type="button">
+          Mark as sent
+        </button>
+        <button className="ghost-action compact" onClick={() => onStatus(action.id, "replied")} type="button">
+          Mark as replied
+        </button>
+        <button className="ghost-action compact" onClick={() => onStatus(action.id, "booked")} type="button">
+          Mark as booked
+        </button>
+        <button className="ghost-action compact" onClick={() => onStatus(action.id, "won")} type="button">
+          Mark as won
+        </button>
+        <button className="ghost-action compact" onClick={() => onStatus(action.id, "lost")} type="button">
+          Mark as lost
+        </button>
+      </div>
+    </article>
+  );
+}
+
 function SignalCard({
   isActive,
   onSelect,
@@ -411,6 +633,7 @@ function SignalCard({
       <p>{signal.whyItMatters}</p>
       <div className="signal-evidence">{signal.evidenceSnippet}</div>
       <div className="signal-action">{signal.recommendedAction}</div>
+      <span className="turn-action">Turn into Action</span>
       <div className="signal-metrics">
         <Pill label="Confidence" value={`${signal.confidenceScore}`} tone="green" />
         <Pill label="Urgency" value={levelLabel(signal.urgencyLevel)} tone={levelTone(signal.urgencyLevel)} />
@@ -453,76 +676,6 @@ function TextAreaField({
   );
 }
 
-function InsightList({ items, title }: { items: InsightItem[]; title: string }) {
-  return (
-    <div className="report-panel">
-      <h3>{title}</h3>
-      {items.length === 0 ? (
-        <p className="quiet-text">No signal yet.</p>
-      ) : (
-        <ul className="insight-list">
-          {items.map((item) => (
-            <li key={item.id}>
-              <strong>{item.title}</strong>
-              <span>{item.explanation}</span>
-              <em>{item.evidence[0]}</em>
-              <small>{item.recommendedAction}</small>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
-
-function LeadList({ leads }: { leads: LeadRescueOpportunity[] }) {
-  return (
-    <div className="report-panel">
-      <h3>Lead Rescue Opportunities</h3>
-      {leads.length === 0 ? (
-        <p className="quiet-text">No rescue opportunity yet.</p>
-      ) : (
-        <ul className="lead-list">
-          {leads.map((lead) => (
-            <li key={lead.id}>
-              <div>
-                <strong>{lead.leadName}</strong>
-                <span>{lead.context}</span>
-              </div>
-              <Pill label="Score" value={`${lead.score}`} tone={levelTone(lead.urgencyLevel)} />
-              <small>{lead.rescueReason}</small>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
-
-function WeeklyPlan({ actions }: { actions: WeeklyAction[] }) {
-  if (actions.length === 0) {
-    return null;
-  }
-
-  return (
-    <div className="weekly-plan">
-      <h3>Weekly Action Plan</h3>
-      <div className="weekly-grid">
-        {actions.map((action) => (
-          <div className="weekly-action" key={action.id}>
-            <span>P{action.priority}</span>
-            <strong>{action.action}</strong>
-            <p>{action.expectedOutcome}</p>
-            <small>
-              {action.owner} · {action.due}
-            </small>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 function FollowupCard({
   copiedId,
   message,
@@ -537,15 +690,24 @@ function FollowupCard({
       <span>{message.scenario}</span>
       <h3>{message.title}</h3>
       <p>{message.message}</p>
-      <small>{message.evidence}</small>
-      <button className="secondary-action" onClick={() => onCopy(message.message, message.id)} type="button">
+      <small>{message.whyThisWorks}</small>
+      <small>{message.recommendedTiming}</small>
+      <button className="secondary-action compact" onClick={() => onCopy(message.message, message.id)} type="button">
         {copiedId === message.id ? "Copied" : "Copy message"}
       </button>
     </article>
   );
 }
 
-function ContentCard({ idea }: { idea: ContentIdea }) {
+function ContentCard({
+  copiedId,
+  idea,
+  onCopy
+}: {
+  copiedId: string | null;
+  idea: ContentIdea;
+  onCopy: (value: string, id: string) => Promise<void>;
+}) {
   return (
     <article className="content-card">
       <span>
@@ -553,8 +715,24 @@ function ContentCard({ idea }: { idea: ContentIdea }) {
       </span>
       <h3>{idea.title}</h3>
       <p>{idea.hook}</p>
-      <small>{idea.whyNow}</small>
+      <ul>
+        {(idea.outline ?? ["No outline available"]).map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+      <small>{idea.whyItWillWork}</small>
       <strong>{idea.callToAction}</strong>
+      <div className="action-button-row">
+        <button className="secondary-action compact" onClick={() => onCopy(idea.hook, idea.id)} type="button">
+          {copiedId === idea.id ? "Copied" : "Copy hook"}
+        </button>
+        <button className="ghost-action compact" type="button">
+          Mark as planned
+        </button>
+        <button className="ghost-action compact" type="button">
+          Mark as published
+        </button>
+      </div>
     </article>
   );
 }
@@ -565,8 +743,8 @@ function ScriptSuggestionCard({ suggestion }: { suggestion: SalesScriptSuggestio
       <span>{suggestion.situation}</span>
       <div className="script-lines">
         <p>
-          <small>Weak</small>
-          {suggestion.weakLine}
+          <small>Problem</small>
+          {suggestion.currentProblem}
         </p>
         <p>
           <small>Improve</small>
@@ -574,13 +752,14 @@ function ScriptSuggestionCard({ suggestion }: { suggestion: SalesScriptSuggestio
         </p>
       </div>
       <strong>{suggestion.whyItWorks}</strong>
+      <small>{suggestion.exampleUseCase}</small>
     </article>
   );
 }
 
-function Metric({ label, value }: { label: string; value: number }) {
+function MetricCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="brief-stat">
+    <div className="metric-card">
       <span>{label}</span>
       <strong>{value}</strong>
     </div>
@@ -628,4 +807,22 @@ function levelTone(level: UrgencyLevel | ImpactLevel): "green" | "amber" | "red"
   if (level === "medium") return "amber";
   if (level === "low") return "gray";
   return "green";
+}
+
+function formatCurrency(value: number) {
+  return `₩${value.toLocaleString("ko-KR")}`;
+}
+
+function isCompatibleAnalysisResult(value: AnalysisResult | null | undefined): value is AnalysisResult {
+  return Boolean(
+    value &&
+      Array.isArray(value.revenueSignals) &&
+      Array.isArray(value.revenueActions) &&
+      Array.isArray(value.leadRescueOpportunities) &&
+      Array.isArray(value.contentIdeas) &&
+      value.contentIdeas.every((idea) => Array.isArray(idea.outline)) &&
+      Array.isArray(value.followupMessages) &&
+      Array.isArray(value.salesScriptSuggestions) &&
+      Array.isArray(value.weeklyActionPlan)
+  );
 }

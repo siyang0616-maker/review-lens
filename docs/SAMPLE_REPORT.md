@@ -1,67 +1,95 @@
-# Sample Report
+# Sample Review-to-Revenue Action Report
 
 ## Executive Summary
 
-This sample uses franchise/high-ticket consultation text. The strongest revenue opportunity is not more brand explanation. It is removing uncertainty around cost, actual profit, payback period, family approval, and comparison criteria.
+This synthetic sample shows the product direction: customer language is converted into revenue actions, not just summarized. The strongest opportunity is to remove uncertainty around price, proof, timing, and buyer confidence.
 
-## This Week's Revenue Signals
+## This Week’s Revenue Actions
 
-### Top Customer Objection
+### Action 1: Rescue warm leads with proof-based follow-ups
 
-Customers hesitate when real cost, pure profit, payback period, and downside risk are unclear.
+- Type: follow_up
+- Target: leads waiting on family approval, price clarity, or comparison shopping
+- Why now: these leads are still warm and have clear unresolved objections
+- Recommended action: send a short decision checklist with total cost, proof, timing, and next step
+- Expected outcome: restart stalled conversations
 
-Recommended action:
+### Action 2: Publish one objection-removal asset
 
-- Create a one-page asset with investment cost, fixed cost, expected pure profit, payback period, and risk checklist.
+- Type: content
+- Target: customers asking repeated price and confidence questions
+- Why now: the same questions are showing up across reviews, sales notes, and lead CSV
+- Recommended action: publish a checklist or FAQ that answers the repeated objection before the sales call
+- Expected outcome: reduce repetitive explanation work
 
-### Top Buying Trigger
+### Action 3: Rewrite the opening sales script
 
-Fast, personalized replies create trust momentum, but the reply needs proof material quickly.
+- Type: script
+- Target: leads entering price-only comparison mode
+- Why now: weak scripts explain price before framing value, proof, and risk
+- Recommended action: lead with decision criteria before discount or persuasion
+- Expected outcome: increase trust before price comparison
 
-Recommended action:
+## Leads to Rescue
 
-- Send supporting evidence within 24 hours after the first strong buying-intent question.
+- Warm lead with family approval concern
+- Warm lead comparing competitors
+- Warm lead asking about total cost
+- Warm lead waiting for proof or realistic expectations
 
-### Leads to Rescue
+## Top Customer Objections
 
-Warm leads are stalled around family discussion, budget pressure, brand comparison, and proof requests.
+- Price is not trusted when total cost is unclear.
+- Buyers hesitate when proof is missing.
+- Family or partner approval creates a hidden buying committee.
+- Competitor comparison needs a clear decision frame.
 
-Recommended action:
+## Buying Triggers
 
-- Start with family-discussion and price-pressure leads because they have clear next objections.
+- Fast, specific follow-up
+- Transparent cost explanation
+- Proof matched to the customer’s situation
+- Clear next step
 
-### Content to Publish
+## Competitor Weaknesses
 
-The most useful content angle is profit clarity.
+- Slow replies
+- Unclear add-on costs
+- Generic explanations
+- Weak proof after first inquiry
 
-Recommended action:
+## Follow-up Message Library
 
-- Publish: "월매출이 아니라 순수익과 회수기간으로 창업 판단하기"
+Example:
 
-### Script to Improve
+> Last time you mentioned that you wanted to compare options before deciding. I put together a short checklist that compares total cost, timing, proof points, and the next step so you can decide with less guesswork. Would you like me to send that over?
 
-The current sales script should move from "good brand/good store" to "decision criteria and evidence first."
+## Content Ideas
 
-Recommended action:
+- Price clarity checklist
+- Before booking / before buying questions
+- Competitor comparison guide
+- Proof asset for family or partner discussion
 
-- Replace broad persuasion with a cost/profit/risk comparison line.
+## Sales Script Improvements
 
-### Competitor Weakness
+Weak line:
 
-Competitors lose trust with slow replies, unclear costs, and generic explanations.
+> The price is this amount.
 
-Recommended action:
+Improved line:
 
-- Turn cost transparency and fast proof delivery into the main differentiation message.
+> Before comparing price alone, it helps to compare total cost, expected outcome, risk, and timing side by side. I can show you those four points first so you can decide whether this is worth continuing.
 
-## Follow-up Message Example
+## Outcome Tracking Summary
 
-지난번에 가족분과 상의가 필요하다고 하셔서, 대화하실 때 바로 보여드릴 수 있는 비용/순수익/리스크 요약을 정리해드리려고 합니다. 원하시면 관심 브랜드 기준으로 1페이지로 보내드릴게요.
+- Follow-ups copied: 0
+- Follow-ups sent: 0
+- Replies recovered: 0
+- Bookings recovered: 0
+- Won deals: 0
+- Estimated recovered revenue: ₩0
 
-## Weekly Action Plan
+## Data Quality / Confidence Notes
 
-1. Build one-page objection asset.
-2. Send rescue follow-ups to top stalled leads.
-3. Publish profit clarity content.
-4. Rewrite first 5 minutes of the sales script.
-5. Add competitor weakness message to the landing page.
+This report is generated from user-provided or demo customer voice data. It should be used as a decision-support tool, not as guaranteed revenue prediction.

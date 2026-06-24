@@ -40,16 +40,19 @@ describe("review-to-revenue engine", () => {
     const markdown = buildRevenueMarkdownReport(result);
 
     expect(result.markdownReport).toBe(markdown);
-    expect(markdown).toContain("# Review-to-Revenue AI Report");
-    expect(markdown).toContain("## This Week's Revenue Signals");
-    expect(markdown).toContain("## Customer Objections");
+    expect(markdown).toContain("# Review-to-Revenue Action Report");
+    expect(markdown).toContain("## This Week’s Revenue Actions");
+    expect(markdown).toContain("## Leads to Rescue");
+    expect(markdown).toContain("## Top Customer Objections");
     expect(markdown).toContain("## Buying Triggers");
-    expect(markdown).toContain("## Trust Barriers");
     expect(markdown).toContain("## Competitor Weaknesses");
-    expect(markdown).toContain("## Lead Rescue Opportunities");
-    expect(markdown).toContain("## Content Ideas");
     expect(markdown).toContain("## Follow-up Message Library");
-    expect(markdown).toContain("## Sales Script Suggestions");
+    expect(markdown).toContain("## Content Ideas");
+    expect(markdown).toContain("## Sales Script Improvements");
+    expect(markdown).toContain("## Outcome Tracking Summary");
+    expect(markdown).toContain("## Data Quality / Confidence Notes");
+    expect(markdown).toContain("## This Week's Revenue Signals");
+    expect(markdown).toContain("## Trust Barriers");
     expect(markdown).toContain("## Weekly Action Plan");
   });
 

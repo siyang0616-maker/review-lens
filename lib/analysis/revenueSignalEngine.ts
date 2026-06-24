@@ -8,9 +8,11 @@ import type {
   InsightCategory,
   InsightItem,
   LeadRescueOpportunity,
+  RevenueAction,
   RevenueSignal,
   RevenueSignalType,
   SalesScriptSuggestion,
+  SupportedLanguage,
   UrgencyLevel,
   WeeklyAction
 } from "../../types/revenue";
@@ -37,6 +39,109 @@ type ParsedLead = {
 };
 
 const emptyInputMessage = "Load sample data or paste customer voice data to generate signals";
+
+const hotelDemoLabel = "Demo Data · Korean Summer Hotel Reviews";
+
+const hotelObjectionDefinitions: InsightDefinition[] = [
+  {
+    category: "objection",
+    explanation:
+      "Customers are not just complaining about price. They are unsure whether the high summer-season price is justified by room view, breakfast, parking, pool experience, soundproofing, and service reliability.",
+    id: "hotel-summer-value-objection",
+    keywords: [
+      "가격",
+      "총비용",
+      "성수기",
+      "조식",
+      "breakfast",
+      "buffet",
+      "주차",
+      "parking",
+      "방음",
+      "noise",
+      "시끄러움",
+      "오션뷰",
+      "view",
+      "수영장",
+      "pool",
+      "추가비용",
+      "extra fee",
+      "가족",
+      "배우자",
+      "비교"
+    ],
+    recommendedAction:
+      "Before discussing price, show total cost, extra fees, view differences, breakfast and pool congestion, parking instructions, and soundproofing expectations in one booking checklist.",
+    title: "Summer price/value confidence is missing"
+  },
+  {
+    category: "objection",
+    explanation:
+      "Families and couples hesitate when room view, noise, breakfast wait time, parking, and pool access are not explained before arrival.",
+    id: "hotel-prearrival-uncertainty",
+    keywords: ["사전 안내", "문자", "체크인", "대기", "동선", "부모님", "아이", "조식", "주차", "방음"],
+    recommendedAction:
+      "Send a pre-arrival guide that explains check-in timing, parking, breakfast rush hours, pool congestion, room-view levels, and quiet-room options.",
+    title: "Pre-arrival uncertainty blocks booking decisions"
+  }
+];
+
+const hotelBuyingTriggerDefinitions: InsightDefinition[] = [
+  {
+    category: "buying_trigger",
+    explanation:
+      "Beach access, ocean view, clean rooms, friendly guidance, family-friendly facilities, and clear pre-arrival information create booking confidence.",
+    id: "hotel-confidence-triggers",
+    keywords: [
+      "위치",
+      "beach",
+      "해변",
+      "접근성",
+      "친절",
+      "guidance",
+      "안내",
+      "청결",
+      "clean",
+      "아이",
+      "family",
+      "kids",
+      "오션뷰",
+      "ocean view",
+      "일출",
+      "사전 안내",
+      "문자"
+    ],
+    recommendedAction:
+      "Lead with the proof customers care about: beach access, real view level, cleanliness, family facilities, and pre-arrival guidance.",
+    title: "Clear stay confidence triggers booking intent"
+  }
+];
+
+const hotelCompetitorWeaknessDefinitions: InsightDefinition[] = [
+  {
+    category: "competitor_weakness",
+    explanation:
+      "Competitors are weak on slow check-in, parking guidance, soundproofing, hidden extra costs, mismatch between photos and actual rooms, and delayed response.",
+    id: "hotel-competitor-friction",
+    keywords: [
+      "체크인 대기",
+      "사진",
+      "실제",
+      "숨은",
+      "추가비용",
+      "방음",
+      "주차 안내",
+      "불친절",
+      "답변",
+      "지연",
+      "total cost",
+      "actual room"
+    ],
+    recommendedAction:
+      "Differentiate with a transparent booking page and follow-up script that explains parking, real room photos, total cost, check-in timing, and response speed.",
+    title: "Competitors create avoidable booking friction"
+  }
+];
 
 const painPointDefinitions: InsightDefinition[] = [
   {
@@ -168,6 +273,8 @@ const competitorWeaknessDefinitions: InsightDefinition[] = [
 export function analyzeRevenueSignals(input: CustomerVoiceInput): AnalysisResult {
   const normalizedInput = normalizeInput(input);
   const inputSummary = summarizeInput(normalizedInput);
+  const generatedAt = new Date().toISOString();
+  const outputLanguage = normalizedInput.outputLanguage ?? "en";
 
   if (!hasAnyInput(normalizedInput)) {
     return finalizeResult({
@@ -175,13 +282,16 @@ export function analyzeRevenueSignals(input: CustomerVoiceInput): AnalysisResult
       competitorWeaknesses: [],
       contentIdeas: [],
       followupMessages: [],
-      generatedAt: new Date().toISOString(),
+      generatedAt,
       inputSummary,
       leadRescueOpportunities: [],
       objections: [],
+      outputLanguage,
       painPoints: [],
       revenueSignals: [],
+      revenueActions: [],
       salesScriptSuggestions: [],
+      sourceLanguages: [outputLanguage],
       summary: emptyInputMessage,
       trustBarriers: [],
       weeklyActionPlan: [],
@@ -195,25 +305,42 @@ export function analyzeRevenueSignals(input: CustomerVoiceInput): AnalysisResult
   const leadRows = parseLeadRows(normalizedInput.salesNotesText, normalizedInput.leadCsv);
   const customerLines = unique([...reviewLines, ...salesLines, ...leadRows.map((lead) => lead.raw)]);
   const allLines = unique([...customerLines, ...competitorLines]);
+  const isHotelDemo = isHotelInput(normalizedInput, allLines);
+  const sourceLanguages = detectSourceLanguages(normalizedInput, allLines);
   const interpretationSignals = extractInterpretationSignals(allLines.join("\n"));
 
   const painPoints = buildInsights(painPointDefinitions, customerLines);
-  const objections = buildInsights(objectionDefinitions, customerLines);
-  const buyingTriggers = buildInsights(buyingTriggerDefinitions, customerLines);
+  const objections = buildInsights(
+    isHotelDemo ? [...hotelObjectionDefinitions, ...objectionDefinitions] : objectionDefinitions,
+    customerLines
+  );
+  const buyingTriggers = buildInsights(
+    isHotelDemo
+      ? [...hotelBuyingTriggerDefinitions, ...buyingTriggerDefinitions]
+      : buyingTriggerDefinitions,
+    customerLines
+  );
   const trustBarriers = buildInsights(trustBarrierDefinitions, allLines);
-  const competitorWeaknesses = buildInsights(competitorWeaknessDefinitions, [
-    ...competitorLines,
-    ...salesLines
-  ]);
+  const competitorWeaknesses = buildInsights(
+    isHotelDemo
+      ? [...hotelCompetitorWeaknessDefinitions, ...competitorWeaknessDefinitions]
+      : competitorWeaknessDefinitions,
+    [...competitorLines, ...salesLines]
+  );
   const leadRescueOpportunities = buildLeadRescueOpportunities(leadRows);
   const contentIdeas = buildContentIdeas({
     buyingTriggers,
+    isHotelDemo,
     objections,
     painPoints,
     trustBarriers
   });
-  const followupMessages = buildFollowupMessages(allLines, leadRescueOpportunities);
-  const salesScriptSuggestions = buildSalesScriptSuggestions(allLines, interpretationSignals.length);
+  const followupMessages = buildFollowupMessages(allLines, leadRescueOpportunities, isHotelDemo);
+  const salesScriptSuggestions = buildSalesScriptSuggestions(
+    allLines,
+    interpretationSignals.length,
+    isHotelDemo
+  );
   const revenueSignals = buildRevenueSignals({
     buyingTriggers,
     competitorWeaknesses,
@@ -226,19 +353,33 @@ export function analyzeRevenueSignals(input: CustomerVoiceInput): AnalysisResult
     trustBarriers
   });
   const weeklyActionPlan = buildWeeklyActionPlan(revenueSignals);
+  const revenueActions = buildRevenueActions({
+    competitorWeaknesses,
+    contentIdeas,
+    createdAt: generatedAt,
+    followupMessages,
+    leadRescueOpportunities,
+    objections,
+    revenueSignals,
+    salesScriptSuggestions
+  });
 
   return finalizeResult({
     buyingTriggers,
     competitorWeaknesses,
     contentIdeas,
+    demoLabel: normalizedInput.demoLabel,
     followupMessages,
-    generatedAt: new Date().toISOString(),
+    generatedAt,
     inputSummary,
     leadRescueOpportunities,
     objections,
+    outputLanguage,
     painPoints,
     revenueSignals,
+    revenueActions,
     salesScriptSuggestions,
+    sourceLanguages,
     summary: buildSummary(objections, leadRescueOpportunities, contentIdeas),
     trustBarriers,
     weeklyActionPlan,
@@ -256,14 +397,69 @@ function finalizeResult(result: AnalysisResult): AnalysisResult {
 function normalizeInput(input: CustomerVoiceInput): CustomerVoiceInput {
   return {
     competitorReviewsText: input.competitorReviewsText.trim(),
+    demoLabel: input.demoLabel?.trim(),
     leadCsv: input.leadCsv.trim(),
+    outputLanguage: input.outputLanguage ?? "en",
     reviewsText: input.reviewsText.trim(),
     salesNotesText: input.salesNotesText.trim()
   };
 }
 
 function hasAnyInput(input: CustomerVoiceInput) {
-  return Object.values(input).some((value) => value.trim().length > 0);
+  return [
+    input.competitorReviewsText,
+    input.leadCsv,
+    input.reviewsText,
+    input.salesNotesText
+  ].some((value) => value.trim().length > 0);
+}
+
+function isHotelInput(input: CustomerVoiceInput, lines: string[]) {
+  if (input.demoLabel === hotelDemoLabel) {
+    return true;
+  }
+
+  const text = lines.join("\n").toLowerCase();
+  const hits = [
+    "호텔",
+    "리조트",
+    "오션뷰",
+    "조식",
+    "수영장",
+    "주차",
+    "체크인",
+    "해변",
+    "hotel",
+    "resort",
+    "ocean view",
+    "breakfast",
+    "parking",
+    "pool"
+  ].filter((keyword) => text.includes(keyword.toLowerCase()));
+
+  return hits.length >= 3;
+}
+
+function detectSourceLanguages(
+  input: CustomerVoiceInput,
+  lines: string[]
+): SupportedLanguage[] {
+  if (input.demoLabel?.includes("Korean")) {
+    return ["ko"];
+  }
+
+  const text = lines.join("\n");
+  const languages = new Set<SupportedLanguage>();
+
+  if (/[가-힣]/.test(text)) {
+    languages.add("ko");
+  }
+
+  if (/[A-Za-z]/.test(text)) {
+    languages.add("en");
+  }
+
+  return languages.size > 0 ? Array.from(languages) : [input.outputLanguage ?? "en"];
 }
 
 function summarizeInput(input: CustomerVoiceInput): AnalysisResult["inputSummary"] {
@@ -351,6 +547,7 @@ function buildContentIdeas(input: {
   buyingTriggers: InsightItem[];
   objections: InsightItem[];
   trustBarriers: InsightItem[];
+  isHotelDemo?: boolean;
 }): ContentIdea[] {
   const evidence = firstEvidence([
     ...input.painPoints,
@@ -359,6 +556,101 @@ function buildContentIdeas(input: {
     ...input.buyingTriggers
   ]);
 
+  if (input.isHotelDemo) {
+    return [
+      {
+        angle: "성수기 예약 전 불안을 체크리스트로 선제 해소",
+        callToAction: "예약 전 조식, 주차, 방음, 수영장 혼잡도 체크리스트 받기",
+        format: "blog",
+        hook: "8월 성수기 호텔은 객실가보다 조식, 주차, 방음, 수영장 혼잡도를 먼저 확인해야 합니다.",
+        id: "hotel-content-peak-season-checklist",
+        outline: ["총비용 확인", "조식 대기 시간", "주차 동선", "방음/객실 위치", "수영장 혼잡도"],
+        priority: 1,
+        sourceSignal: evidence,
+        suggestedHook: "8월 성수기 호텔은 객실가보다 조식, 주차, 방음, 수영장 혼잡도를 먼저 확인해야 합니다.",
+        targetObjection: "summer hotel value uncertainty",
+        title: "8월 성수기 호텔 예약 전 체크리스트",
+        whyItWillWork: "고객이 결제 전에 반복 확인하는 조식, 주차, 방음, 수영장 혼잡도를 한 번에 처리합니다.",
+        whyNow: "성수기 가격 부담과 총비용 질문이 반복되고 있습니다."
+      },
+      {
+        angle: "오션뷰 기대 차이를 예약 질문으로 줄임",
+        callToAction: "오션뷰 등급별 객실 확인표 받기",
+        format: "faq",
+        hook: "오션뷰도 정면뷰, 측면뷰, 일부뷰에 따라 만족도가 달라집니다.",
+        id: "hotel-content-ocean-view-questions",
+        outline: ["정면뷰/측면뷰/일부뷰 구분", "층수 확인", "사진 요청", "환불/변경 조건", "도착 시간"],
+        priority: 2,
+        sourceSignal: evidence,
+        suggestedHook: "오션뷰도 정면뷰, 측면뷰, 일부뷰에 따라 만족도가 달라집니다.",
+        targetObjection: "room view clarity",
+        title: "오션뷰 객실 예약 전 확인해야 할 5가지",
+        whyItWillWork: "사진과 실제 객실 차이에서 생기는 신뢰 장벽을 줄입니다.",
+        whyNow: "오션뷰 기대와 실제 뷰 차이에 대한 질문이 반복됩니다."
+      },
+      {
+        angle: "아이 동반 고객의 실사용 불안을 먼저 해결",
+        callToAction: "아이 동반 예약 전 혼잡 시간표 확인하기",
+        format: "sales_asset",
+        hook: "아이와 함께라면 조식과 수영장 혼잡도가 객실가만큼 중요합니다.",
+        id: "hotel-content-family-congestion",
+        outline: ["조식 피크 시간", "키즈풀 혼잡도", "객실 동선", "주차 위치", "짐 보관"],
+        priority: 3,
+        sourceSignal: evidence,
+        suggestedHook: "아이와 함께라면 조식과 수영장 혼잡도가 객실가만큼 중요합니다.",
+        targetObjection: "family comfort",
+        title: "아이 동반 호텔 선택 시 조식/수영장 혼잡도 보는 법",
+        whyItWillWork: "가족 여행 리드에게 다시 연락할 명분을 제공합니다.",
+        whyNow: "아이 동반, 조식 대기, 수영장 혼잡 우려가 함께 나타납니다."
+      },
+      {
+        angle: "부모님 동반 여행의 동선 리스크 제거",
+        callToAction: "부모님 동반 객실/주차 동선 상담받기",
+        format: "blog",
+        hook: "부모님을 모시고 가는 호텔은 뷰보다 주차, 엘리베이터, 방음 동선이 먼저입니다.",
+        id: "hotel-content-parents-trip",
+        outline: ["엘리베이터 접근", "주차 거리", "조용한 층", "체크인 대기", "조식 좌석"],
+        priority: 4,
+        sourceSignal: evidence,
+        suggestedHook: "부모님을 모시고 가는 호텔은 뷰보다 주차, 엘리베이터, 방음 동선이 먼저입니다.",
+        targetObjection: "family comfort",
+        title: "부모님 모시고 호텔 갈 때 확인해야 할 동선/주차/방음",
+        whyItWillWork: "부모님 동반 고객의 구매 기준을 구체화합니다.",
+        whyNow: "부모님 동반 리드가 주차, 동선, 방음을 반복 문의합니다."
+      },
+      {
+        angle: "사진과 실제 객실 차이에 대한 신뢰 회복",
+        callToAction: "객실 사진 확인 질문 리스트 받기",
+        format: "faq",
+        hook: "호텔 사진과 실제 객실 차이는 예약 전 질문으로 줄일 수 있습니다.",
+        id: "hotel-content-photo-reality-gap",
+        outline: ["최근 사진 요청", "객실 크기", "욕실 상태", "뷰 방향", "성수기 배정 기준"],
+        priority: 5,
+        sourceSignal: evidence,
+        suggestedHook: "호텔 사진과 실제 객실 차이는 예약 전 질문으로 줄일 수 있습니다.",
+        targetObjection: "expectation mismatch",
+        title: "호텔 사진과 실제 객실 차이를 줄이는 예약 질문법",
+        whyItWillWork: "경쟁 호텔의 사진/실제 불만을 우리 쪽 신뢰 메시지로 전환합니다.",
+        whyNow: "사진과 실제 객실 차이 불만이 경쟁 리뷰에서 반복됩니다."
+      },
+      {
+        angle: "객실가가 아니라 총비용으로 가격 반박 해소",
+        callToAction: "성수기 호텔 총비용 계산표 받기",
+        format: "short_video",
+        hook: "성수기 호텔은 객실가, 조식, 수영장, 주차, 추가요금을 합쳐 비교해야 합니다.",
+        id: "hotel-content-total-cost",
+        outline: ["객실가", "조식 비용", "수영장 비용", "주차 비용", "추가요금/보증금"],
+        priority: 6,
+        sourceSignal: evidence,
+        suggestedHook: "성수기 호텔은 객실가, 조식, 수영장, 주차, 추가요금을 합쳐 비교해야 합니다.",
+        targetObjection: "price and hidden cost",
+        title: "성수기 호텔 총비용 계산법: 객실가, 조식, 수영장, 주차, 추가요금",
+        whyItWillWork: "가격 부담 리드를 단순 할인 논의가 아니라 총비용 판단으로 전환합니다.",
+        whyNow: "추가비용과 총비용 질문이 결제 직전 보류를 만들고 있습니다."
+      }
+    ];
+  }
+
   return [
     {
       angle: "순수익과 회수기간을 먼저 보여주는 판단 프레임",
@@ -366,6 +658,7 @@ function buildContentIdeas(input: {
       format: "blog",
       hook: "월매출보다 중요한 것은 내 통장에 남는 돈입니다.",
       id: "content-profit-clarity",
+      outline: ["월매출 착시", "고정비", "변동비", "회수기간", "상담 전 질문"],
       priority: 1,
       sourceSignal: evidence,
       suggestedHook: "월매출보다 중요한 것은 내 통장에 남는 돈입니다.",
@@ -380,6 +673,7 @@ function buildContentIdeas(input: {
       format: "sales_asset",
       hook: "가족이 반대하기 전에 먼저 보여줘야 할 숫자 5가지",
       id: "content-family-onepager",
+      outline: ["초기비용", "리스크", "회수기간", "운영 부담", "가족 질문"],
       priority: 2,
       sourceSignal: findEvidenceFromInsights(input.objections, "family") ?? evidence,
       suggestedHook: "가족이 반대하기 전에 먼저 보여줘야 할 숫자 5가지",
@@ -394,6 +688,7 @@ function buildContentIdeas(input: {
       format: "faq",
       hook: "메가커피와 컴포즈를 비교할 때 매출표만 보면 놓치는 것",
       id: "content-brand-comparison",
+      outline: ["투자금", "운영 난이도", "회수기간", "권리금", "리스크"],
       priority: 3,
       sourceSignal: findEvidenceFromInsights(input.objections, "comparison") ?? evidence,
       suggestedHook: "메가커피와 컴포즈를 비교할 때 매출표만 보면 놓치는 것",
@@ -408,6 +703,7 @@ function buildContentIdeas(input: {
       format: "short_video",
       hook: "내 예산으로 가능한 브랜드부터 봐야 상담 시간이 줄어듭니다.",
       id: "content-budget-fit",
+      outline: ["예산 범위", "불가능한 선택지", "가능한 선택지", "리스크", "다음 상담"],
       priority: 4,
       sourceSignal: findEvidenceFromInsights(input.painPoints, "budget") ?? evidence,
       suggestedHook: "내 예산으로 가능한 브랜드부터 봐야 상담 시간이 줄어듭니다.",
@@ -421,8 +717,85 @@ function buildContentIdeas(input: {
 
 function buildFollowupMessages(
   evidenceLines: string[],
-  leads: LeadRescueOpportunity[]
+  leads: LeadRescueOpportunity[],
+  isHotelDemo = false
 ): FollowupMessage[] {
+  if (isHotelDemo) {
+    const hotelMessages: Array<{
+      scenario: FollowupScenario;
+      title: string;
+      keywords: string[];
+      message: string;
+      nextStep: string;
+    }> = [
+      {
+        keywords: ["가족", "배우자", "부모님", "아이", "상의"],
+        message:
+          "지난번에 가족분과 상의가 필요하다고 하셨는데, 성수기에는 객실가보다 조식 혼잡도, 주차 동선, 방음, 수영장 이용 조건을 같이 보셔야 합니다. 가족분께 바로 공유하실 수 있게 핵심 체크리스트로 정리해드릴게요.",
+        nextStep: "가족 공유용 성수기 예약 체크리스트 전송",
+        scenario: "family_discussion",
+        title: "가족/배우자 상의 후 미응답 리드"
+      },
+      {
+        keywords: ["가격", "총비용", "예산", "부담", "추가비용"],
+        message:
+          "성수기 가격이 부담된다고 하셨는데, 객실가만 보면 실제 만족도를 판단하기 어렵습니다. 조식, 수영장, 주차, 뷰 등급, 추가요금까지 포함한 총비용 기준으로 비교표를 정리해드리겠습니다.",
+        nextStep: "객실가와 추가비용을 나눈 총비용 비교표 전송",
+        scenario: "price_pressure",
+        title: "가격 부담 후 미응답 리드"
+      },
+      {
+        keywords: ["비교", "다른 호텔", "다른 곳", "Comparing"],
+        message:
+          "다른 호텔과 비교 중이시면 가격만 비교하기보다 체크인 대기, 주차 안내, 방음, 실제 객실뷰, 조식 대기까지 같은 기준으로 보시는 게 좋습니다. 비교 기준표를 보내드릴게요.",
+        nextStep: "호텔 비교 기준표 전송",
+        scenario: "brand_comparison",
+        title: "비교 중인 고객"
+      },
+      {
+        keywords: ["주차", "방음", "조식", "수영장", "체크인", "혼잡"],
+        message:
+          "지난번에 성수기 조식과 수영장 혼잡도, 주차와 방음 문제를 걱정하셨는데, 예약 전에 확인하시면 좋은 시간대와 객실 선택 기준을 정리해드렸습니다.",
+        nextStep: "혼잡 시간대와 객실 선택 기준 전송",
+        scenario: "proof_gap",
+        title: "주차/방음/조식 걱정 고객"
+      },
+      {
+        keywords: ["결제", "Hot", "보류", "오늘"],
+        message:
+          "결제 직전에 멈추신 이유가 뷰 등급, 총비용, 체크인 대기 중 무엇인지에 따라 추천 객실이 달라집니다. 오늘 예약 전 마지막으로 확인할 항목만 짧게 정리해드릴게요.",
+        nextStep: "결제 전 최종 확인 체크리스트 전송",
+        scenario: "slow_reply_recovery",
+        title: "결제 직전 보류 고객"
+      }
+    ];
+
+    return hotelMessages
+      .map((definition, index): FollowupMessage | null => {
+        const evidence = findEvidence(evidenceLines, definition.keywords)[0];
+
+        if (!evidence) {
+          return null;
+        }
+
+        return {
+          evidence,
+          id: `hotel-followup-${index + 1}`,
+          message: definition.message,
+          nextStep: definition.nextStep,
+          recommendedTiming: "Send within the 3–14 day warm follow-up window.",
+          scenario: definition.scenario,
+          targetObjection: definition.title,
+          targetLead: findLeadForScenario(leads, definition.scenario),
+          title: definition.title,
+          tone: toneForScenario(definition.scenario),
+          whenToUse: "Use when this booking concern appears in reviews, sales notes, or lead CSV.",
+          whyThisWorks: "It gives the lead a concrete booking decision tool instead of asking whether they are still interested."
+        } satisfies FollowupMessage;
+      })
+      .filter((message): message is FollowupMessage => Boolean(message));
+  }
+
   const definitions: Array<{
     scenario: FollowupScenario;
     title: string;
@@ -493,11 +866,14 @@ function buildFollowupMessages(
         id: `followup-${index + 1}`,
         message: definition.message,
         nextStep: definition.nextStep,
+        recommendedTiming: "Send within 24 hours of identifying this stalled decision reason.",
         scenario: definition.scenario,
+        targetObjection: definition.title,
         targetLead: findLeadForScenario(leads, definition.scenario),
         title: definition.title,
         tone: toneForScenario(definition.scenario),
-        whenToUse: definition.nextStep
+        whenToUse: definition.nextStep,
+        whyThisWorks: "It reopens the conversation with a useful decision asset instead of a vague check-in."
       } satisfies FollowupMessage;
     })
     .filter((message): message is FollowupMessage => Boolean(message));
@@ -505,13 +881,55 @@ function buildFollowupMessages(
 
 function buildSalesScriptSuggestions(
   evidenceLines: string[],
-  interpretationSignalCount: number
+  interpretationSignalCount: number,
+  isHotelDemo = false
 ): SalesScriptSuggestion[] {
   const proofEvidence = findEvidence(evidenceLines, ["자료", "근거", "부족", "명확"])[0];
   const profitEvidence = findEvidence(evidenceLines, ["순수익", "월순익", "회수기간"])[0];
   const familyEvidence = findEvidence(evidenceLines, ["가족", "배우자", "상의"])[0];
   const comparisonEvidence = findEvidence(evidenceLines, ["비교", "컴포즈", "메가커피"])[0];
-  const suggestions: SalesScriptSuggestion[] = [];
+  const suggestions: Array<
+    Omit<SalesScriptSuggestion, "exampleUseCase" | "objectionHandled"> &
+      Partial<Pick<SalesScriptSuggestion, "exampleUseCase" | "objectionHandled">>
+  > = [];
+
+  if (isHotelDemo) {
+    const priceEvidence =
+      findEvidence(evidenceLines, ["가격", "총비용", "조식", "주차", "수영장", "방음"])[0] ??
+      safeFallbackEvidence(evidenceLines);
+    const viewEvidence =
+      findEvidence(evidenceLines, ["오션뷰", "뷰", "사진", "실제", "객실"])[0] ??
+      safeFallbackEvidence(evidenceLines);
+
+    suggestions.push(
+      {
+        currentProblem: "상담 초반에 가격만 안내하면 고객이 비교 모드로 빠진다.",
+        evidence: priceEvidence,
+        id: "hotel-script-total-value-before-price",
+        improvedLine:
+          "성수기 호텔은 객실가만 비교하면 실제 만족도를 판단하기 어렵습니다. 조식 혼잡도, 주차, 객실뷰, 방음, 수영장 이용 조건까지 같이 보셔야 총비용 대비 만족도가 맞습니다.",
+        improvedScript:
+          "성수기 호텔은 객실가만 비교하면 실제 만족도를 판단하기 어렵습니다. 조식 혼잡도, 주차, 객실뷰, 방음, 수영장 이용 조건까지 같이 보셔야 총비용 대비 만족도가 맞습니다.",
+        reason: "가격 반박을 할인 논의가 아니라 총비용 대비 만족도 판단으로 전환합니다.",
+        situation: "가격만 묻는 성수기 호텔 리드",
+        weakLine: "객실가는 1박 기준 이 금액입니다.",
+        whyItWorks: "가격 반박을 할인 논의가 아니라 총비용 대비 만족도 판단으로 전환합니다."
+      },
+      {
+        currentProblem: "오션뷰를 단순히 오션뷰라고 안내하면 기대 차이가 생긴다.",
+        evidence: viewEvidence,
+        id: "hotel-script-view-clarity",
+        improvedLine:
+          "오션뷰도 고층 정면뷰, 측면뷰, 저층 일부뷰로 만족도가 달라집니다. 원하시는 뷰 수준에 따라 객실 타입을 구분해서 보시는 게 좋습니다.",
+        improvedScript:
+          "오션뷰도 고층 정면뷰, 측면뷰, 저층 일부뷰로 만족도가 달라집니다. 원하시는 뷰 수준에 따라 객실 타입을 구분해서 보시는 게 좋습니다.",
+        reason: "객실 사진과 실제 뷰 차이에서 생기는 신뢰 손실을 줄입니다.",
+        situation: "오션뷰 기대치가 불명확한 리드",
+        weakLine: "오션뷰 객실입니다.",
+        whyItWorks: "객실 사진과 실제 뷰 차이에서 생기는 신뢰 손실을 줄입니다."
+      }
+    );
+  }
 
   if (proofEvidence) {
     suggestions.push({
@@ -593,7 +1011,136 @@ function buildSalesScriptSuggestions(
     });
   }
 
-  return suggestions;
+  return suggestions.map((suggestion) => ({
+    ...suggestion,
+    exampleUseCase:
+      suggestion.exampleUseCase ??
+      `Use when a lead shows this concern: ${suggestion.situation}`,
+    objectionHandled:
+      suggestion.objectionHandled ?? suggestion.currentProblem
+  }));
+}
+
+function buildRevenueActions(input: {
+  competitorWeaknesses: InsightItem[];
+  contentIdeas: ContentIdea[];
+  createdAt: string;
+  followupMessages: FollowupMessage[];
+  leadRescueOpportunities: LeadRescueOpportunity[];
+  objections: InsightItem[];
+  revenueSignals: RevenueSignal[];
+  salesScriptSuggestions: SalesScriptSuggestion[];
+}): RevenueAction[] {
+  const actions: RevenueAction[] = [];
+
+  input.followupMessages.slice(0, 5).forEach((message, index) => {
+    const matchingLead =
+      input.leadRescueOpportunities.find((lead) => lead.leadName === message.targetLead) ??
+      input.leadRescueOpportunities[index] ??
+      input.leadRescueOpportunities[0];
+
+    actions.push({
+      createdAt: input.createdAt,
+      evidence: [message.evidence],
+      expectedOutcome: "Recover a stalled conversation and move the lead to a concrete next step.",
+      id: `action-follow-up-${index + 1}`,
+      potentialValue: matchingLead?.potentialValue ?? matchingLead?.expectedValue,
+      primaryCTA: "View follow-up messages",
+      priority: index < 3 ? "high" : "medium",
+      recommendedAction: message.message,
+      relatedSignalId: "signal-leads",
+      status: "ready",
+      suggestedMessage: message.message,
+      targetSegment: message.title,
+      title:
+        index === 0
+          ? `Rescue ${input.leadRescueOpportunities.length} warm leads with proof-based follow-ups`
+          : message.title,
+      type: "follow_up",
+      whyNow:
+        index === 0
+          ? "These leads are within the 3–14 day follow-up window."
+          : message.recommendedTiming
+    });
+  });
+
+  input.contentIdeas.slice(0, 3).forEach((idea, index) => {
+    actions.push({
+      createdAt: input.createdAt,
+      evidence: [idea.sourceSignal],
+      expectedOutcome: "Remove repeated buying friction before the next sales conversation.",
+      id: `action-content-${index + 1}`,
+      primaryCTA: "Copy hook",
+      priority: index === 0 ? "high" : "medium",
+      recommendedAction: `${idea.title}: ${idea.hook}`,
+      relatedSignalId: "signal-content",
+      status: "ready",
+      suggestedMessage: idea.hook,
+      targetSegment: idea.targetObjection,
+      title: idea.title,
+      type: "content",
+      whyNow: idea.whyNow
+    });
+  });
+
+  input.salesScriptSuggestions.slice(0, 2).forEach((script, index) => {
+    actions.push({
+      createdAt: input.createdAt,
+      evidence: [script.evidence],
+      expectedOutcome: "Increase trust before the customer enters price-only comparison mode.",
+      id: `action-script-${index + 1}`,
+      primaryCTA: "Copy improved script",
+      priority: "high",
+      recommendedAction: script.improvedLine,
+      relatedSignalId: "signal-script",
+      status: "ready",
+      suggestedMessage: script.improvedLine,
+      targetSegment: script.objectionHandled,
+      title: script.situation,
+      type: "script",
+      whyNow: script.whyItWorks
+    });
+  });
+
+  const competitor = input.competitorWeaknesses[0];
+  if (competitor) {
+    actions.push({
+      createdAt: input.createdAt,
+      evidence: competitor.evidence,
+      expectedOutcome: "Turn competitor friction into our positioning advantage.",
+      id: "action-competitor-gap-1",
+      primaryCTA: "Update positioning",
+      priority: "medium",
+      recommendedAction: competitor.recommendedAction,
+      relatedSignalId: "signal-competitor",
+      status: "ready",
+      targetSegment: "Comparison-shopping leads",
+      title: `Use competitor gap: ${competitor.title}`,
+      type: "competitor_gap",
+      whyNow: competitor.explanation
+    });
+  }
+
+  const objection = input.objections[0];
+  if (objection) {
+    actions.push({
+      createdAt: input.createdAt,
+      evidence: objection.evidence,
+      expectedOutcome: "Create a reusable trust asset that answers the objection before sales follow-up.",
+      id: "action-trust-asset-1",
+      primaryCTA: "Create trust asset",
+      priority: "high",
+      recommendedAction: objection.recommendedAction,
+      relatedSignalId: "signal-objection",
+      status: "ready",
+      targetSegment: "High-intent hesitant leads",
+      title: `Build trust asset for: ${objection.title}`,
+      type: "trust_asset",
+      whyNow: objection.explanation
+    });
+  }
+
+  return actions.slice(0, 12);
 }
 
 function buildRevenueSignals(input: {
@@ -835,7 +1382,9 @@ function parseCsvLeadRow(row: Record<string, string>): ParsedLead {
   const context = [
     getField(row, ["interest", "관심", "brand", "브랜드"]),
     status,
-    getField(row, ["last_note", "note", "memo", "메모"])
+    getField(row, ["objection", "반박", "concern"]),
+    getField(row, ["lastmessage", "last_message", "last_note", "note", "memo", "메모"]),
+    getField(row, ["notes", "비고"])
   ]
     .filter(Boolean)
     .join(" / ");
@@ -918,13 +1467,25 @@ function getField(row: Record<string, string>, names: string[]) {
 function classifyLeadTags(text: string) {
   const tags: string[] = [];
 
-  if (/가족|배우자|상의|설득/.test(text)) tags.push("family_discussion");
-  if (/가격|비용|예산|부담|실패 리스크/.test(text)) tags.push("price_pressure");
-  if (/비교|브랜드|컴포즈|메가커피|배스킨라빈스/.test(text)) tags.push("brand_comparison");
+  if (/가족|배우자|부모님|아이|상의|설득|Family\/Partner/i.test(text)) {
+    tags.push("family_discussion");
+  }
+  if (/가격|비용|총비용|추가비용|예산|부담|실패 리스크|Price Concern/i.test(text)) {
+    tags.push("price_pressure");
+  }
+  if (/비교|다른 호텔|다른 곳|브랜드|컴포즈|메가커피|배스킨라빈스|Comparing|Comparison Shopping/i.test(text)) {
+    tags.push("brand_comparison");
+  }
   if (/순수익|월순익|회수기간|월매출/.test(text)) tags.push("profit_clarity");
-  if (/자료|근거|부족|명확/.test(text)) tags.push("proof_gap");
-  if (/풀오토|운영 부담|직장인/.test(text)) tags.push("operation_risk");
-  if (/미응답|대기|늦/.test(text)) tags.push("delayed_response");
+  if (/자료|근거|부족|명확|정보|안내|뷰|오션뷰|사진|실제|방음|주차|조식|수영장|Information Gap|Trust Barrier|Outcome Uncertainty/i.test(text)) {
+    tags.push("proof_gap");
+  }
+  if (/풀오토|운영 부담|직장인|체크인|대기|Timing Delay/i.test(text)) {
+    tags.push("operation_risk");
+  }
+  if (/미응답|대기|늦|No Response|Waiting|Needs Follow-up|Contacted/i.test(text)) {
+    tags.push("delayed_response");
+  }
 
   return unique(tags);
 }
@@ -989,6 +1550,24 @@ function toneForScenario(scenario: FollowupScenario): FollowupMessage["tone"] {
 }
 
 function chooseLeadMessage(lead: ParsedLead) {
+  if (/호텔|오션뷰|조식|주차|수영장|방음|객실|Hotel Booking/i.test(lead.raw)) {
+    if (lead.tags.includes("family_discussion")) {
+      return "가족 공유용으로 조식 혼잡도, 주차 동선, 방음, 수영장 이용 조건을 정리한 성수기 예약 체크리스트를 보내세요.";
+    }
+
+    if (lead.tags.includes("price_pressure")) {
+      return "객실가, 조식, 수영장, 주차, 뷰 등급, 추가요금을 나눈 총비용 비교표로 다시 설명하세요.";
+    }
+
+    if (lead.tags.includes("brand_comparison")) {
+      return "다른 호텔과 같은 기준으로 체크인 대기, 주차 안내, 방음, 실제 객실뷰, 조식 대기를 비교해 보내세요.";
+    }
+
+    if (lead.tags.includes("proof_gap")) {
+      return "예약 전 확인할 객실뷰, 조식 혼잡 시간, 주차 위치, 방음 기준을 한 장으로 보내세요.";
+    }
+  }
+
   if (lead.tags.includes("family_discussion")) {
     return "가족 공유용 비용/순수익/리스크 1페이지 요약본을 보내고, 반대 질문을 먼저 받아보세요.";
   }
@@ -1077,10 +1656,24 @@ function signal(input: {
     confidenceScore: confidence,
     description: input.whyItMatters,
     evidence: [evidenceSnippet],
+    evidenceItems: [
+      {
+        originalText: evidenceSnippet,
+        sourceLanguage: detectLanguage(evidenceSnippet)
+      }
+    ],
     evidenceSnippet,
     impact: input.impactLevel,
     urgency: input.urgencyLevel
   };
+}
+
+function detectLanguage(text: string): SupportedLanguage {
+  if (/[가-힣]/.test(text)) {
+    return "ko";
+  }
+
+  return "en";
 }
 
 function first<T>(items: T[]) {

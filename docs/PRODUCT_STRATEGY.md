@@ -1,93 +1,101 @@
 # Product Strategy
 
-## Product
+## Product Thesis
 
-Review-to-Revenue AI converts messy customer text into this week's revenue actions.
+Review-to-Revenue AI converts messy customer language into this week’s executable revenue actions.
 
-Core promise:
+Core flow:
 
-> Turn customer voice into revenue actions.
+> Customer Voice → Revenue Action → Outcome Data
 
 Korean promise:
 
-> 고객의 말에서 이번 주 매출 액션을 찾아드립니다.
+> 고객의 말에서 이번 주 바로 실행할 매출 액션을 찾아드립니다.
 
-## Strategic Frame
+## Positioning
 
-The product should not compete as a generic review summarizer. The wedge is the weekly revenue brief:
+Do not position this as:
 
-- What are customers objecting to?
-- What makes them ready to buy?
-- Which leads can be rescued this week?
-- What content should be published to remove repeated friction?
-- Which sales script line needs to change?
-- Which competitor weakness can be used now?
+- Review analyzer
+- Sentiment dashboard
+- CRM
+- Generic AI report generator
+- Social listening tool
+
+Position it as:
+
+- Revenue action command center
+- Customer voice to follow-up, content, and script actions
+- Weekly action report for sales and growth teams
+- Outcome loop for proving which customer language patterns convert
+
+## Strategic Moat
+
+The moat is not review summarization. The moat is the closed loop between customer language, recommended revenue actions, and tracked outcomes.
+
+That means the system must connect:
+
+- What the customer said
+- What action the user should take
+- What happened after the action
+- Which patterns should influence the next recommendation
 
 ## Primary ICP
 
 1. High-ticket consultation teams
-2. Franchise sales teams
-3. B2B service founders
-4. Agencies doing customer-voice analysis for clients
-5. Growth marketers who need proof-backed content angles
+2. Hospitality and reservation-based businesses
+3. Franchise sales teams
+4. Wedding and event vendors
+5. Clinics / med spas with consultation leads
+6. Agencies that package customer voice into client deliverables
 
-## MVP Positioning
+## Paid Value Hypothesis
 
-Do not say:
+People will not pay simply because the app summarizes reviews. They may pay if it helps recover leads, reduce repeated objections, and create sales assets faster.
 
-- Review analyzer
-- CRM
-- Sentiment dashboard
-- Social listening tool
+The product must make these outcomes obvious:
 
-Say:
+- A lead was rescued because the system produced the right follow-up.
+- A repeated objection became a reusable checklist or proof asset.
+- A weak sales script became a clearer decision-support script.
+- A competitor complaint became positioning copy.
+- Outcome tracking revealed which action types actually worked.
 
-- Weekly revenue signal dashboard
-- Customer voice to follow-up, content, and script actions
-- Paste messy customer text, get this week's sales moves
+## Multilingual Philosophy
 
-## Differentiation
+Different languages, same revenue intent.
 
-Most tools stop at:
+The system should preserve original customer language, normalize intent into a shared revenue taxonomy, and generate output in the user’s preferred language.
 
-- Positive/negative sentiment
-- Topic clusters
-- Summary
-- Support tagging
+This is especially important for Korean SMBs that may collect Korean customer voice but want English-friendly reports, or agencies that need to package local-language insights into buyer-ready deliverables.
 
-This product should continue to:
-
-- Rescue specific leads
-- Generate follow-up messages
-- Create sales content angles
-- Improve scripts
-- Identify competitor positioning gaps
-
-## Success Metric
+## MVP Success Metric
 
 The MVP is useful if a user can paste 30 to 100 real customer text items and leave with:
 
 - 3 leads to follow up today
-- 1 objection asset to make tomorrow
+- 1 objection asset to create tomorrow
 - 1 content piece to publish this week
 - 1 script change to test in the next sales conversation
+- 1 outcome metric to revisit next week
 
 ## Product Boundary
 
 Build now:
 
-- Paste-first workspace
-- Local rule engine
-- Weekly signal cards
-- Markdown/PDF/CSV export
-- Sample data that demonstrates the promise immediately
+- Paste-first workflow
+- Demo dataset selector
+- Revenue action board
+- Outcome tracking
+- Action report export
+- Rule-based engine with tests
 
 Do not build yet:
 
-- CRM
 - Login
 - Billing
 - Database
+- CRM sync
 - Review scraping
-- Social DM import
-- External AI dependency
+- Automated outreach
+- Broad SaaS admin features

@@ -1,8 +1,18 @@
+export type SupportedLanguage = "ko" | "en" | "ja" | "es";
+
+export type EvidenceItem = {
+  originalText: string;
+  sourceLanguage: SupportedLanguage;
+  translatedText?: string;
+};
+
 export type CustomerVoiceInput = {
   reviewsText: string;
   competitorReviewsText: string;
   salesNotesText: string;
   leadCsv: string;
+  demoLabel?: string;
+  outputLanguage?: SupportedLanguage;
 };
 
 export type RevenueSignalType =
@@ -24,6 +34,7 @@ export type RevenueSignal = {
   description: string;
   whyItMatters: string;
   evidence: string[];
+  evidenceItems: EvidenceItem[];
   evidenceSnippet: string;
   recommendedAction: string;
   confidence: number;
@@ -89,6 +100,7 @@ export type ContentIdea = {
   targetObjection: string;
   suggestedHook: string;
   hook: string;
+  outline: string[];
   whyItWillWork: string;
   whyNow: string;
   sourceSignal: string;
@@ -107,6 +119,7 @@ export type FollowupScenario =
 export type FollowupMessage = {
   id: string;
   scenario: FollowupScenario;
+  targetObjection: string;
   tone: "soft" | "professional" | "urgent" | "trust-building";
   title: string;
   targetLead: string;
@@ -114,6 +127,8 @@ export type FollowupMessage = {
   evidence: string;
   nextStep: string;
   whenToUse: string;
+  whyThisWorks: string;
+  recommendedTiming: string;
 };
 
 export type SalesScriptSuggestion = {
@@ -126,6 +141,8 @@ export type SalesScriptSuggestion = {
   reason: string;
   whyItWorks: string;
   evidence: string;
+  objectionHandled: string;
+  exampleUseCase: string;
 };
 
 export type WeeklyAction = {
@@ -140,9 +157,70 @@ export type WeeklyAction = {
   sourceSignalType: RevenueSignalType;
 };
 
+export type ActionStatus =
+  | "ready"
+  | "copied"
+  | "sent"
+  | "replied"
+  | "booked"
+  | "won"
+  | "lost"
+  | "ignored";
+
+export type RevenueAction = {
+  id: string;
+  type: "follow_up" | "content" | "script" | "competitor_gap" | "trust_asset";
+  title: string;
+  targetSegment: string;
+  whyNow: string;
+  evidence: string[];
+  recommendedAction: string;
+  expectedOutcome: string;
+  priority: "low" | "medium" | "high";
+  status: ActionStatus;
+  relatedSignalId?: string;
+  suggestedMessage?: string;
+  primaryCTA?: string;
+  potentialValue?: string;
+  createdAt: string;
+  updatedAt?: string;
+};
+
+export type ActionOutcome = {
+  actionId: string;
+  status: Exclude<ActionStatus, "ready">;
+  note?: string;
+  timestamp: string;
+};
+
+export type OutcomeSummary = {
+  followupsCopied: number;
+  followupsSent: number;
+  repliesRecovered: number;
+  bookingsRecovered: number;
+  wonDeals: number;
+  estimatedRecoveredRevenue: number;
+};
+
+export type DemoDataset = {
+  id: string;
+  name: string;
+  industry: string;
+  language: SupportedLanguage;
+  description: string;
+  reviewsText: string;
+  competitorReviewsText: string;
+  salesNotesText: string;
+  leadCsv: string;
+  demoLabel: string;
+};
+
 export type AnalysisResult = {
   generatedAt: string;
   summary: string;
+  demoLabel?: string;
+  sourceLanguages: SupportedLanguage[];
+  outputLanguage: SupportedLanguage;
   inputSummary: {
     reviewLines: number;
     competitorReviewLines: number;
@@ -160,5 +238,6 @@ export type AnalysisResult = {
   followupMessages: FollowupMessage[];
   salesScriptSuggestions: SalesScriptSuggestion[];
   weeklyActionPlan: WeeklyAction[];
+  revenueActions: RevenueAction[];
   markdownReport: string;
 };
