@@ -21,11 +21,16 @@ export type RevenueSignal = {
   type: RevenueSignalType;
   label: string;
   title: string;
+  description: string;
   whyItMatters: string;
+  evidence: string[];
   evidenceSnippet: string;
   recommendedAction: string;
+  confidence: number;
   confidenceScore: number;
+  urgency: UrgencyLevel;
   urgencyLevel: UrgencyLevel;
+  impact: ImpactLevel;
   impactLevel: ImpactLevel;
 };
 
@@ -40,20 +45,29 @@ export type InsightItem = {
   id: string;
   category: InsightCategory;
   title: string;
+  description: string;
   evidence: string[];
   explanation: string;
   recommendedAction: string;
+  impact: ImpactLevel;
   confidenceScore: number;
 };
 
 export type LeadRescueOpportunity = {
   id: string;
   leadName: string;
+  segment: string;
+  status: string;
   context: string;
+  likelyObjection: string;
   rescueReason: string;
+  nextBestAction: string;
+  suggestedMessage: string;
   recommendedMessage: string;
   score: number;
+  urgency: UrgencyLevel;
   urgencyLevel: UrgencyLevel;
+  potentialValue?: string;
   expectedValue: string;
   daysSinceLastContact?: number;
   tags: string[];
@@ -62,8 +76,20 @@ export type LeadRescueOpportunity = {
 export type ContentIdea = {
   id: string;
   title: string;
-  format: "blog" | "short_video" | "email" | "faq" | "sales_asset";
+  format:
+    | "blog"
+    | "shorts"
+    | "instagram"
+    | "email"
+    | "landing"
+    | "faq"
+    | "short_video"
+    | "sales_asset";
+  angle: string;
+  targetObjection: string;
+  suggestedHook: string;
   hook: string;
+  whyItWillWork: string;
   whyNow: string;
   sourceSignal: string;
   callToAction: string;
@@ -81,18 +107,23 @@ export type FollowupScenario =
 export type FollowupMessage = {
   id: string;
   scenario: FollowupScenario;
+  tone: "soft" | "professional" | "urgent" | "trust-building";
   title: string;
   targetLead: string;
   message: string;
   evidence: string;
   nextStep: string;
+  whenToUse: string;
 };
 
 export type SalesScriptSuggestion = {
   id: string;
+  currentProblem: string;
   situation: string;
   weakLine: string;
+  improvedScript: string;
   improvedLine: string;
+  reason: string;
   whyItWorks: string;
   evidence: string;
 };
@@ -100,9 +131,11 @@ export type SalesScriptSuggestion = {
 export type WeeklyAction = {
   id: string;
   priority: number;
+  day: string;
   action: string;
   owner: string;
   due: string;
+  purpose: string;
   expectedOutcome: string;
   sourceSignalType: RevenueSignalType;
 };
@@ -127,4 +160,5 @@ export type AnalysisResult = {
   followupMessages: FollowupMessage[];
   salesScriptSuggestions: SalesScriptSuggestion[];
   weeklyActionPlan: WeeklyAction[];
+  markdownReport: string;
 };

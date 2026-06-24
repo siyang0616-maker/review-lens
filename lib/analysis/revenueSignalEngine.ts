@@ -15,6 +15,7 @@ import type {
   WeeklyAction
 } from "../../types/revenue";
 import { extractInterpretationSignals } from "./lensEngine";
+import { buildRevenueMarkdownReport } from "./reportBuilder";
 
 type InsightDefinition = {
   id: string;
@@ -27,6 +28,7 @@ type InsightDefinition = {
 
 type ParsedLead = {
   leadName: string;
+  status: string;
   context: string;
   expectedValue: string;
   daysSinceLastContact?: number;
@@ -168,7 +170,7 @@ export function analyzeRevenueSignals(input: CustomerVoiceInput): AnalysisResult
   const inputSummary = summarizeInput(normalizedInput);
 
   if (!hasAnyInput(normalizedInput)) {
-    return {
+    return finalizeResult({
       buyingTriggers: [],
       competitorWeaknesses: [],
       contentIdeas: [],
@@ -182,8 +184,9 @@ export function analyzeRevenueSignals(input: CustomerVoiceInput): AnalysisResult
       salesScriptSuggestions: [],
       summary: emptyInputMessage,
       trustBarriers: [],
-      weeklyActionPlan: []
-    };
+      weeklyActionPlan: [],
+      markdownReport: ""
+    });
   }
 
   const reviewLines = splitEvidence(normalizedInput.reviewsText);
@@ -224,7 +227,7 @@ export function analyzeRevenueSignals(input: CustomerVoiceInput): AnalysisResult
   });
   const weeklyActionPlan = buildWeeklyActionPlan(revenueSignals);
 
-  return {
+  return finalizeResult({
     buyingTriggers,
     competitorWeaknesses,
     contentIdeas,
@@ -238,7 +241,15 @@ export function analyzeRevenueSignals(input: CustomerVoiceInput): AnalysisResult
     salesScriptSuggestions,
     summary: buildSummary(objections, leadRescueOpportunities, contentIdeas),
     trustBarriers,
-    weeklyActionPlan
+    weeklyActionPlan,
+    markdownReport: ""
+  });
+}
+
+function finalizeResult(result: AnalysisResult): AnalysisResult {
+  return {
+    ...result,
+    markdownReport: buildRevenueMarkdownReport(result)
   };
 }
 
@@ -277,9 +288,10 @@ function buildInsights(definitions: InsightDefinition[], evidenceLines: string[]
   const text = evidenceLines.join("\n");
 
   return definitions
-    .map((definition) => {
+    .map((definition): InsightItem | null => {
       const evidence = findEvidence(evidenceLines, definition.keywords);
       const keywordHits = countKeywordHits(text, definition.keywords);
+      const impact: ImpactLevel = definition.category === "buying_trigger" ? "medium" : "high";
 
       if (evidence.length === 0 && keywordHits === 0) {
         return null;
@@ -288,8 +300,10 @@ function buildInsights(definitions: InsightDefinition[], evidenceLines: string[]
       return {
         category: definition.category,
         confidenceScore: confidenceFromEvidence(evidence.length, keywordHits),
+        description: definition.explanation,
         evidence: evidence.length > 0 ? evidence : [safeFallbackEvidence(evidenceLines)],
         explanation: definition.explanation,
+        impact,
         id: definition.id,
         recommendedAction: definition.recommendedAction,
         title: definition.title
@@ -301,8 +315,11 @@ function buildInsights(definitions: InsightDefinition[], evidenceLines: string[]
 
 function buildLeadRescueOpportunities(leads: ParsedLead[]): LeadRescueOpportunity[] {
   return leads
+    .filter((lead) => !isClosedLead(lead))
     .map((lead, index) => {
       const { reasons, score } = scoreLead(lead);
+      const recommendedMessage = chooseLeadMessage(lead);
+      const urgency = toUrgency(score);
 
       return {
         context: lead.context,
@@ -310,11 +327,18 @@ function buildLeadRescueOpportunities(leads: ParsedLead[]): LeadRescueOpportunit
         expectedValue: lead.expectedValue,
         id: `lead-${index + 1}`,
         leadName: lead.leadName,
-        recommendedMessage: chooseLeadMessage(lead),
+        likelyObjection: lead.tags[0] ?? "information_gap",
+        nextBestAction: recommendedMessage,
+        potentialValue: lead.expectedValue,
+        recommendedMessage,
         rescueReason: reasons.join(" / "),
         score,
+        segment: lead.tags.includes("brand_comparison") ? "brand comparison" : "warm inbound lead",
+        status: lead.status,
+        suggestedMessage: recommendedMessage,
         tags: lead.tags,
-        urgencyLevel: toUrgency(score)
+        urgency,
+        urgencyLevel: urgency
       } satisfies LeadRescueOpportunity;
     })
     .filter((lead) => lead.score >= 55)
@@ -337,43 +361,59 @@ function buildContentIdeas(input: {
 
   return [
     {
+      angle: "순수익과 회수기간을 먼저 보여주는 판단 프레임",
       callToAction: "상담 전 예산과 목표 회수기간을 보내달라고 요청",
       format: "blog",
       hook: "월매출보다 중요한 것은 내 통장에 남는 돈입니다.",
       id: "content-profit-clarity",
       priority: 1,
       sourceSignal: evidence,
+      suggestedHook: "월매출보다 중요한 것은 내 통장에 남는 돈입니다.",
+      targetObjection: "profit clarity",
       title: "월매출이 아니라 순수익과 회수기간으로 창업 판단하기",
+      whyItWillWork: "반복되는 순수익/회수기간 질문을 상담 전에 해소합니다.",
       whyNow: "순수익, 회수기간, 비용 구조 질문이 반복되고 있습니다."
     },
     {
+      angle: "배우자와 가족이 실제로 반대할 질문을 먼저 처리",
       callToAction: "가족 공유용 PDF 또는 카카오 메시지 받기",
       format: "sales_asset",
       hook: "가족이 반대하기 전에 먼저 보여줘야 할 숫자 5가지",
       id: "content-family-onepager",
       priority: 2,
       sourceSignal: findEvidenceFromInsights(input.objections, "family") ?? evidence,
+      suggestedHook: "가족이 반대하기 전에 먼저 보여줘야 할 숫자 5가지",
+      targetObjection: "family approval",
       title: "배우자와 가족 설득용 창업 리스크 체크리스트",
+      whyItWillWork: "숨은 구매위원회가 묻는 비용, 실패 리스크, 회수기간을 선제 답변합니다.",
       whyNow: "가족 상의와 배우자 설득이 고액 리드의 실제 병목입니다."
     },
     {
+      angle: "브랜드 비교를 같은 기준의 의사결정표로 전환",
       callToAction: "관심 브랜드 2개를 입력하면 비교표 보내기",
       format: "faq",
       hook: "메가커피와 컴포즈를 비교할 때 매출표만 보면 놓치는 것",
       id: "content-brand-comparison",
       priority: 3,
       sourceSignal: findEvidenceFromInsights(input.objections, "comparison") ?? evidence,
+      suggestedHook: "메가커피와 컴포즈를 비교할 때 매출표만 보면 놓치는 것",
+      targetObjection: "brand comparison",
       title: "브랜드 비교 중인 예비 창업자를 위한 판단 기준표",
+      whyItWillWork: "비교 중인 리드가 더 많은 설명 대신 판단 기준을 받게 됩니다.",
       whyNow: "브랜드 비교 리드는 설득보다 기준표에 반응합니다."
     },
     {
+      angle: "예산 가능성을 먼저 판단해 상담 시간을 줄임",
       callToAction: "무료 10분 예산 가능성 진단 신청",
       format: "short_video",
       hook: "내 예산으로 가능한 브랜드부터 봐야 상담 시간이 줄어듭니다.",
       id: "content-budget-fit",
       priority: 4,
       sourceSignal: findEvidenceFromInsights(input.painPoints, "budget") ?? evidence,
+      suggestedHook: "내 예산으로 가능한 브랜드부터 봐야 상담 시간이 줄어듭니다.",
+      targetObjection: "budget fit",
       title: "예산별 가능한 프랜차이즈 선택지 먼저 보기",
+      whyItWillWork: "예산이 맞지 않는 선택지를 빨리 제외해 리드의 불확실성을 낮춥니다.",
       whyNow: "브랜드 설명보다 예산 적합성을 먼저 알고 싶다는 신호가 강합니다."
     }
   ];
@@ -455,7 +495,9 @@ function buildFollowupMessages(
         nextStep: definition.nextStep,
         scenario: definition.scenario,
         targetLead: findLeadForScenario(leads, definition.scenario),
-        title: definition.title
+        title: definition.title,
+        tone: toneForScenario(definition.scenario),
+        whenToUse: definition.nextStep
       } satisfies FollowupMessage;
     })
     .filter((message): message is FollowupMessage => Boolean(message));
@@ -473,10 +515,14 @@ function buildSalesScriptSuggestions(
 
   if (proofEvidence) {
     suggestions.push({
+      currentProblem: "근거 없이 좋은 매물이라고 설득하고 있음",
       evidence: proofEvidence,
       id: "script-proof-before-pitch",
       improvedLine:
         "좋은 매물이라는 말보다 먼저 판단 기준을 보여드리겠습니다. 투자금, 예상 순수익, 회수기간, 리스크를 한 장으로 보고 맞지 않는 조건은 바로 제외하겠습니다.",
+      improvedScript:
+        "좋은 매물이라는 말보다 먼저 판단 기준을 보여드리겠습니다. 투자금, 예상 순수익, 회수기간, 리스크를 한 장으로 보고 맞지 않는 조건은 바로 제외하겠습니다.",
+      reason: "추상적 설득을 숫자와 제외 기준으로 바꿔 신뢰 장벽을 낮춥니다.",
       situation: "근거 자료가 부족하다고 느끼는 리드",
       weakLine: "이 매물은 괜찮고 요즘 문의가 많습니다.",
       whyItWorks: "추상적 설득을 숫자와 제외 기준으로 바꿔 신뢰 장벽을 낮춥니다."
@@ -485,10 +531,14 @@ function buildSalesScriptSuggestions(
 
   if (profitEvidence) {
     suggestions.push({
+      currentProblem: "월매출 중심 설명으로 실제 수익 불안을 해소하지 못함",
       evidence: profitEvidence,
       id: "script-profit-before-sales",
       improvedLine:
         "월매출은 참고값이고, 결정은 순수익과 회수기간으로 보시는 게 맞습니다. 먼저 고정비와 변동비를 나눠 현실적인 범위를 계산해보겠습니다.",
+      improvedScript:
+        "월매출은 참고값이고, 결정은 순수익과 회수기간으로 보시는 게 맞습니다. 먼저 고정비와 변동비를 나눠 현실적인 범위를 계산해보겠습니다.",
+      reason: "고객의 실제 판단 질문에 맞춰 상담 순서를 바꿉니다.",
       situation: "월매출 설명만으로 감이 오지 않는 리드",
       weakLine: "월매출은 이 정도까지 나올 수 있습니다.",
       whyItWorks: "고객의 실제 판단 질문에 맞춰 상담 순서를 바꿉니다."
@@ -497,10 +547,14 @@ function buildSalesScriptSuggestions(
 
   if (familyEvidence) {
     suggestions.push({
+      currentProblem: "가족 상의 리드를 후속 자료 없이 방치함",
       evidence: familyEvidence,
       id: "script-family-buyer-committee",
       improvedLine:
         "가족분이 가장 걱정하실 부분은 비용, 실패 리스크, 회수기간일 가능성이 큽니다. 같이 보실 수 있게 1페이지 요약으로 정리해드릴게요.",
+      improvedScript:
+        "가족분이 가장 걱정하실 부분은 비용, 실패 리스크, 회수기간일 가능성이 큽니다. 같이 보실 수 있게 1페이지 요약으로 정리해드릴게요.",
+      reason: "결정권자 밖의 반박까지 상담 흐름 안으로 끌어옵니다.",
       situation: "가족 또는 배우자 상의가 필요한 리드",
       weakLine: "상의해보시고 연락 주세요.",
       whyItWorks: "결정권자 밖의 반박까지 상담 흐름 안으로 끌어옵니다."
@@ -509,10 +563,14 @@ function buildSalesScriptSuggestions(
 
   if (comparisonEvidence) {
     suggestions.push({
+      currentProblem: "브랜드 비교 질문에 명확한 판단 기준을 주지 못함",
       evidence: comparisonEvidence,
       id: "script-comparison-frame",
       improvedLine:
         "두 브랜드를 매출만으로 비교하면 위험합니다. 투자금, 운영 강도, 순수익, 회수기간을 같은 기준으로 놓고 어떤 조건이 맞지 않는지 먼저 지우겠습니다.",
+      improvedScript:
+        "두 브랜드를 매출만으로 비교하면 위험합니다. 투자금, 운영 강도, 순수익, 회수기간을 같은 기준으로 놓고 어떤 조건이 맞지 않는지 먼저 지우겠습니다.",
+      reason: "모호한 비교를 의사결정 가능한 기준표로 바꿉니다.",
       situation: "브랜드를 비교 중인 리드",
       weakLine: "둘 다 장단점이 있습니다.",
       whyItWorks: "모호한 비교를 의사결정 가능한 기준표로 바꿉니다."
@@ -521,10 +579,14 @@ function buildSalesScriptSuggestions(
 
   if (suggestions.length === 0 && interpretationSignalCount > 0) {
     suggestions.push({
+      currentProblem: "완곡한 불안을 직접 다루지 않고 재연락을 기다림",
       evidence: "고객 텍스트에 숨은 부정 신호가 포함되어 있습니다.",
       id: "script-hidden-signal",
       improvedLine:
         "걱정되는 부분을 그냥 넘기지 않고, 비용과 리스크 기준으로 다시 정리해서 판단하실 수 있게 도와드리겠습니다.",
+      improvedScript:
+        "걱정되는 부분을 그냥 넘기지 않고, 비용과 리스크 기준으로 다시 정리해서 판단하실 수 있게 도와드리겠습니다.",
+      reason: "완곡한 불안을 직접 다뤄 다음 대화를 만듭니다.",
       situation: "표면적으로는 약하지만 내부 경고가 있는 텍스트",
       weakLine: "괜찮으시면 다시 연락 주세요.",
       whyItWorks: "완곡한 불안을 직접 다뤄 다음 대화를 만듭니다."
@@ -641,7 +703,10 @@ function buildRevenueSignals(input: {
 }
 
 function buildWeeklyActionPlan(signals: RevenueSignal[]): WeeklyAction[] {
-  const actionMap: Record<RevenueSignalType, Omit<WeeklyAction, "id" | "priority">> = {
+  const actionMap: Record<
+    RevenueSignalType,
+    Omit<WeeklyAction, "id" | "priority" | "day" | "purpose">
+  > = {
     competitor_weakness: {
       action: "경쟁사 약점 1개를 랜딩/상담 오프닝/후속 메시지에 같은 문장으로 반영",
       due: "금요일",
@@ -688,7 +753,9 @@ function buildWeeklyActionPlan(signals: RevenueSignal[]): WeeklyAction[] {
 
   return signals.map((signalItem, index) => ({
     ...actionMap[signalItem.type],
+    day: actionMap[signalItem.type].due,
     id: `weekly-action-${index + 1}`,
+    purpose: actionMap[signalItem.type].expectedOutcome,
     priority: index + 1
   }));
 }
@@ -737,6 +804,9 @@ function parseSalesNoteLine(line: string): ParsedLead {
   const raw = line.trim();
   const daysSinceLastContact = extractDays(raw);
   const expectedValue = parts.find((part) => /예산|억|만원|budget/i.test(part)) ?? "미확인";
+  const status =
+    parts.find((part) => /미응답|대기|비교|상의|검토|lost|won|계약|성사|실패/i.test(part)) ??
+    "active";
 
   return {
     context: parts.slice(1).join(" / ") || raw,
@@ -744,6 +814,7 @@ function parseSalesNoteLine(line: string): ParsedLead {
     expectedValue,
     leadName,
     raw,
+    status,
     tags: classifyLeadTags(raw)
   };
 }
@@ -760,9 +831,10 @@ function parseCsvLeadRow(row: Record<string, string>): ParsedLead {
   ]);
   const expectedValue =
     getField(row, ["budget", "expected_value", "value", "예산", "금액"]) || "미확인";
+  const status = getField(row, ["status", "상태", "stage", "단계"]) || "active";
   const context = [
     getField(row, ["interest", "관심", "brand", "브랜드"]),
-    getField(row, ["status", "상태"]),
+    status,
     getField(row, ["last_note", "note", "memo", "메모"])
   ]
     .filter(Boolean)
@@ -774,6 +846,7 @@ function parseCsvLeadRow(row: Record<string, string>): ParsedLead {
     expectedValue,
     leadName,
     raw,
+    status,
     tags: classifyLeadTags(raw)
   };
 }
@@ -864,8 +937,12 @@ function scoreLead(lead: ParsedLead) {
     score += 18;
     reasons.push(`${lead.daysSinceLastContact}일째 멈춘 warm lead`);
   } else if (lead.daysSinceLastContact && lead.daysSinceLastContact > 14) {
-    score += 8;
-    reasons.push("장기 미응답이지만 맥락이 남아 있음");
+    score -= lead.daysSinceLastContact > 30 ? 14 : 4;
+    reasons.push(
+      lead.daysSinceLastContact > 30
+        ? "30일 이상 방치되어 회수 가능성 낮음"
+        : "장기 미응답이지만 맥락이 남아 있음"
+    );
   }
 
   const tagScores: Record<string, { score: number; reason: string }> = {
@@ -888,7 +965,7 @@ function scoreLead(lead: ParsedLead) {
   }
 
   if (/억/.test(lead.expectedValue)) {
-    score += 8;
+    score += lead.daysSinceLastContact && lead.daysSinceLastContact > 30 ? 16 : 8;
     reasons.push("고액 예산 단서");
   }
 
@@ -896,6 +973,19 @@ function scoreLead(lead: ParsedLead) {
     reasons: unique(reasons).slice(0, 4),
     score: clamp(score, 0, 96)
   };
+}
+
+function isClosedLead(lead: ParsedLead) {
+  return /lost|won|계약\s*완료|수주|성사|종료|실패|이미\s*계약/i.test(
+    `${lead.status} ${lead.raw}`
+  );
+}
+
+function toneForScenario(scenario: FollowupScenario): FollowupMessage["tone"] {
+  if (scenario === "slow_reply_recovery") return "urgent";
+  if (scenario === "proof_gap" || scenario === "profit_clarity") return "trust-building";
+  if (scenario === "price_pressure" || scenario === "brand_comparison") return "professional";
+  return "soft";
 }
 
 function chooseLeadMessage(lead: ParsedLead) {
@@ -978,10 +1068,18 @@ function signal(input: {
   urgencyLevel: UrgencyLevel;
   impactLevel: ImpactLevel;
 }): RevenueSignal {
+  const confidence = clamp(Math.round(input.confidenceScore), 0, 100);
+  const evidenceSnippet = input.evidenceSnippet || "No direct evidence yet.";
+
   return {
     ...input,
-    confidenceScore: clamp(Math.round(input.confidenceScore), 0, 100),
-    evidenceSnippet: input.evidenceSnippet || "No direct evidence yet."
+    confidence,
+    confidenceScore: confidence,
+    description: input.whyItMatters,
+    evidence: [evidenceSnippet],
+    evidenceSnippet,
+    impact: input.impactLevel,
+    urgency: input.urgencyLevel
   };
 }
 

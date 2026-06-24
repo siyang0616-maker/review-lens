@@ -82,6 +82,9 @@ Main result shape:
 - `salesScriptSuggestions`
 - `weeklyActionPlan`
 - `revenueSignals`
+- `markdownReport`
+
+The schema keeps UI-friendly fields and integration-friendly aliases together. For example, `RevenueSignal` includes `confidenceScore`/`urgencyLevel` for the current UI and `confidence`/`urgency`/`impact`/`evidence` for future API and CRM adapters. `LeadRescueOpportunity`, `ContentIdea`, `FollowupMessage`, `SalesScriptSuggestion`, and `WeeklyAction` follow the same compatibility rule.
 
 Analysis modules:
 
@@ -129,12 +132,14 @@ Future OpenAI integration should plug into the same analysis boundary:
 - Add an `analysisService` adapter around the current local engine.
 - Let OpenAI enrich evidence, copy, and prioritization.
 - Keep the local rule engine as fallback and regression baseline.
+- Every AI insight must preserve evidence, confidence, urgency, impact, and next action.
 
 ## Future Integrations
 
 Do not build these before validation:
 
 - CRM sync
+- CSV upload UI
 - Supabase persistence
 - Stripe billing
 - WhatsApp/Kakao/Instagram DM import

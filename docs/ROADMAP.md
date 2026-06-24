@@ -6,6 +6,7 @@
 - Replace the first screen with `This Week’s Revenue Signals`.
 - Add sample franchise/high-ticket consultation data.
 - Add local analysis types and engine.
+- Stabilize `AnalysisResult` with integration-friendly fields for future AI/CRM adapters.
 - Add Markdown report builder.
 - Add localStorage persistence.
 - Add copyable follow-up message library.
@@ -27,6 +28,7 @@
 ## This Week
 
 - Improve CSV parsing around common exports.
+- Add a real CSV upload control on top of the current textarea parser.
 - Add better empty and low-evidence states.
 - Add a printable one-page executive report layout.
 - Add a lightweight feedback capture panel:
