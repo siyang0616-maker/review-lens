@@ -1,5 +1,7 @@
 # Validation Checklist
 
+This checklist is for deciding whether Review-to-Revenue AI feels like a practical B2B revenue action product, not a review summary dashboard.
+
 ## 30-second clarity test
 
 - Can the user see who to contact today within 30 seconds?
@@ -7,40 +9,44 @@
 - Can the user see what sales script to improve within 30 seconds?
 - Can the user track whether an action was copied, sent, replied, booked, or won?
 
-## First Screen Review
+## Demo data clarity
 
-- The title says `This Week’s Revenue Actions`.
-- The hero shows `Leads to Rescue`, `Actions Ready`, and `Revenue at Risk`.
-- `Revenue at Risk` is clearly labeled as an estimate, not guaranteed revenue.
-- `Today’s Priority Actions` includes at least one follow-up, one content action, and one script action.
-- The active demo dataset is visible and marked as synthetic demo data.
+- Is the active demo dataset visible near the top of the app?
+- Is every demo dataset clearly labeled as synthetic sample data?
+- Does the exported report show `Demo Data · Synthetic Korean Summer Hotel Reviews` for the hotel demo?
+- Can a first-time user load hotel, wedding, or clinic data without reading documentation?
 
-## Action Quality Review
+## Revenue action usefulness
 
-- Each action has a clear target segment.
-- Each action explains why it should happen now.
-- Each action includes evidence from the input.
-- Each action has a concrete recommended action.
-- Follow-up messages give a reason to re-open the conversation.
-- Content ideas include a hook, outline, and CTA.
-- Script suggestions handle a specific objection.
+- Does the first screen show `This Week’s Revenue Actions` rather than only analysis signals?
+- Are the first 3 priority actions specific enough to execute today?
+- Does each action include a target segment, why-now reason, evidence, recommended action, CTA, and status?
+- Are follow-up messages practical enough to copy into a real sales conversation?
+- Do content ideas include a hook, outline, target objection, and CTA?
+- Do script suggestions explain the current problem, improved script, objection handled, and example use case?
 
-## Outcome Tracking Review
+## Outcome tracking usefulness
 
-- Copying an action records a copied outcome.
-- Marking an action as sent, replied, booked, won, or lost updates the action status.
-- Marking an action as won can add its potentialValue to estimated recovered revenue.
-- Outcome tracking is described as manual MVP tracking, not revenue guarantee.
+- Does changing action status feel obvious?
+- Does local outcome tracking survive page reloads?
+- Does the dashboard distinguish copied, sent, replied, booked, won, and estimated recovered revenue?
+- Is the app clear that recovered revenue is manually tracked and not guaranteed revenue?
 
-## Demo Dataset Review
+## Business validation questions
 
-- Korean Summer Hotel Reviews loads.
-- English Wedding Vendor Leads loads.
-- English Clinic Consultation Leads loads.
-- All demo data is labeled synthetic sample data.
+- Would a hotel, clinic, wedding vendor, or franchise consultant understand the value without explanation?
+- Would the exported report feel like something a buyer could pay for?
+- Which action type feels most valuable: follow-up, content, script, competitor gap, or trust asset?
+- Which action type feels weakest or generic?
+- What real data would make the recommendation more convincing?
 
-## Multilingual Review
+## Pass condition
 
-- Source language metadata is preserved.
-- Output language can be set to English or Korean.
-- The system follows: Different languages, same revenue intent.
+The MVP passes this stage if a user can load or paste customer voice data and quickly leave with:
+
+- 3 leads or segments to follow up
+- 1 content asset to publish
+- 1 sales script to improve
+- 1 outcome metric to revisit later
+
+If the user only sees a summary, the product has failed the current positioning.
