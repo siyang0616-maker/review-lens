@@ -119,7 +119,7 @@ Action we want them to take:
 
 - Start the live demo.
 - View a sample report.
-- Request a free Revenue Action Report from their own data.
+- Request a Free Revenue Leak Diagnostic from their own data.
 
 Product asset shown:
 
@@ -205,7 +205,7 @@ Pain felt:
 
 Message they need to hear:
 
-> Send 10-20 anonymized reviews, inquiries, or sales notes. We will return a free Revenue Action Report showing your top leaks and next actions.
+> Send 10-20 anonymized reviews, inquiries, or sales notes. We will return a Free Revenue Leak Diagnostic showing your top leaks and next actions.
 
 Action we want them to take:
 
@@ -370,6 +370,10 @@ Mitigation:
 - Make setup the bridge to monthly SaaS.
 
 ### H. Monthly SaaS Conversion
+
+Validation note:
+
+> Monthly SaaS is only valid after evidence shows customers execute actions, report outcomes, and ask for recurring refresh.
 
 User mindset:
 
@@ -636,7 +640,7 @@ Understand promise
 
 CTA:
 
-> Get a free Revenue Action Report from 10-20 reviews or sales notes.
+> Get a Free Revenue Leak Diagnostic from 10-20 reviews or sales notes.
 
 Free report request should ask for:
 
@@ -664,7 +668,7 @@ Conversion goal:
 
 Goal:
 
-Convert free report recipient into a paid Revenue Action Report buyer.
+Convert Free Revenue Leak Diagnostic recipient into a paid Revenue Action Report buyer.
 
 Day 0:
 
@@ -1079,7 +1083,7 @@ Goal:
 
 Message:
 
-> Get a free Revenue Action Report from 10-20 reviews or sales notes.
+> Get a Free Revenue Leak Diagnostic from 10-20 reviews or sales notes.
 
 Goal:
 
@@ -1089,7 +1093,7 @@ Goal:
 
 Primary CTA:
 
-> Get My Free Revenue Action Report
+> Get My Free Revenue Leak Diagnostic
 
 Secondary CTA:
 
@@ -1269,9 +1273,9 @@ Mitigation:
 
 Next sprint:
 
-> Master PRD
+> Evidence Plan and Kill Criteria
 
-The Master PRD should combine:
+The evidence plan should combine:
 
 - Product Identity.
 - Competitive Wedge.
@@ -1291,7 +1295,7 @@ Source documents:
 - `company/04C_REVENUE_JOURNEY_BLUEPRINT.md`
 - `README.md`
 
-The Master PRD should define:
+The evidence plan should define:
 
 - Exact MVP scope.
 - First beachhead.
@@ -1306,8 +1310,10 @@ The Master PRD should define:
 - Non-goals.
 - Success metrics.
 - Stage 5 implementation boundaries.
+- Kill criteria.
+- Evidence thresholds.
 
-The Master PRD should not:
+The evidence plan should not:
 
 - Build code.
 - Redesign UI.
@@ -1320,4 +1326,4 @@ The Master PRD should not:
 
 Decision:
 
-> Stage 5 should turn strategy into a single product decision document before any product surface is changed.
+> Product build remains No-Go until evidence thresholds pass. Master PRD is conditional after evidence validates data sharing, paid demand, action execution, outcome reporting, and at least one recurring or setup signal.

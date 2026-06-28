@@ -531,9 +531,13 @@ Product one-liner:
 
 Stage 5 should be:
 
-> Master PRD for the Revenue Action Platform MVP.
+> Evidence Plan and Kill Criteria first.
 
-The Master PRD should be based on:
+Product build remains:
+
+> No-Go until evidence thresholds pass.
+
+The evidence plan should be based on:
 
 - `company/01_PRODUCT_IDENTITY.md`
 - `company/02_COMPETITIVE_WEDGE.md`
@@ -556,6 +560,8 @@ Stage 5 should define:
 - Non-goals.
 - Validation plan.
 - Technical constraints.
+- Kill criteria.
+- Evidence thresholds.
 
 Stage 5 should not:
 
@@ -567,4 +573,4 @@ Stage 5 should not:
 - Add OpenAI API.
 - Add CRM sync.
 
-The Master PRD should become the decision document before product surfaces are changed.
+The Master PRD should become the decision document only after the evidence plan validates data sharing, paid demand, action execution, outcome reporting, and at least one recurring or setup signal.

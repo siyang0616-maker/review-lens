@@ -10,6 +10,8 @@ This is not a feature expansion sprint.
 
 Review-to-Revenue AI is a Revenue Action Platform for Customer Voice.
 
+This blueprint is conditional. Do not implement more product surfaces until Stage 5B evidence thresholds pass.
+
 It must help the user know:
 
 1. Who to contact.
@@ -642,6 +644,10 @@ Franchise / Business Consulting is the fastest PMF path because:
 ## 8. Demo Modes
 
 ### Korean Franchise Consulting Demo
+
+Primary validation demo:
+
+> This should be the primary validation demo for the first beachhead.
 
 Purpose:
 

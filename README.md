@@ -12,6 +12,10 @@ Korean positioning:
 
 > 고객의 말에서 이번 주 바로 실행할 매출 액션을 찾아드립니다.
 
+## Current Validation Status
+
+Product build is paused. The project is in evidence validation mode before Master PRD.
+
 ## What The MVP Does
 
 - Shows `This Week’s Revenue Actions` as the first screen.

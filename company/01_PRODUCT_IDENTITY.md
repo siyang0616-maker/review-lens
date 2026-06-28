@@ -2,17 +2,21 @@
 
 ## 1. Product Category
 
-Review-to-Revenue AI creates a new category:
+Review-to-Revenue AI is a:
 
-**AI Revenue Intelligence Platform for Customer Voice**
+**Revenue Action Platform for Customer Voice**
 
 This is not a review analytics category. It is a revenue workflow category built on customer language.
 
 The product reads customer voice sources such as reviews, inquiries, consultation notes, competitor complaints, and lead CSV data, then turns them into revenue actions a business can execute this week.
 
+Investor-facing category phrase:
+
+> Revenue Intelligence Layer for Customer Voice
+
 Category definition:
 
-> AI software that converts unstructured customer language into prioritized follow-up, content, sales script, positioning, and outcome-tracking actions.
+> Software that converts unstructured customer language into prioritized follow-up, content, sales script, positioning, and outcome-tracking actions.
 
 ## 2. One-line Positioning
 
@@ -63,9 +67,22 @@ Reports are not the product. Reports are packaging for actions. The core product
 
 Primary ICP:
 
-**Clinics / med spas**
+**Franchise / Business Consulting**
 
 Why this should be the first vertical:
+
+- Founder-market fit is strongest.
+- The workflow, lead objections, content patterns, and customer language are already familiar.
+- Leads are high-value and often stall after questions about investment amount, payback period, risk, location, brand comparison, operator workload, family approval, trust, and proof.
+- Sales notes, consultation notes, lead spreadsheets, KakaoTalk / SMS / DM snippets, blog inquiries, and form submissions are close to revenue action.
+- Follow-up messages, content ideas, and sales script improvements can directly affect consultation recovery.
+- Manual report delivery is acceptable during validation before the product becomes a full SaaS.
+
+Second expansion candidate:
+
+**Clinics / med spas**
+
+Why this should be the second expansion candidate:
 
 - High-value consultations and procedures make recovered leads financially meaningful.
 - Customer objections are often language-heavy: price, trust, downtime, proof, spouse approval, risk, expectations, and comparison.
@@ -73,21 +90,10 @@ Why this should be the first vertical:
 - Follow-up messages, content ideas, and sales script improvements can directly affect revenue.
 - Small teams often lack a dedicated revenue operations function, so the product can create immediate leverage.
 
-Secondary ICP:
-
-**Wedding vendors**
-
-Why this should be the second validation vertical:
-
-- High-ticket, emotionally complex purchases.
-- Couples compare vendors and pause when proof, package scope, pricing, timeline, or partner approval is unclear.
-- Follow-up quality strongly affects booking outcomes.
-- Content and sales scripts can be tied directly to real objections.
-
 Verticals to keep as future expansion:
 
 - Hotels / resorts: strong review volume and direct-booking potential, but less consistent lead-rescue workflow unless the property has active inquiry or reservation sales data.
-- Franchise consultants: strong revenue fit, but narrower buyer pool and higher trust burden.
+- Wedding vendors: high-ticket, emotionally complex purchases where couples compare vendors and pause when proof, package scope, pricing, timeline, or partner approval is unclear.
 - Real estate: high value, but workflow complexity and compliance risk are higher.
 - Home remodeling: strong objections and lead value, but project-specific quoting workflows may require deeper vertical customization.
 
@@ -319,4 +325,4 @@ Writing rules:
 
 ## 11. Investor-grade Summary
 
-Review-to-Revenue AI is an AI Revenue Intelligence Platform for Customer Voice. The product converts unstructured customer language from reviews, inquiries, sales notes, competitor complaints, and lead data into weekly revenue actions: who to follow up with, what to send, what content to publish, what sales script to improve, and what competitor weakness to use. Unlike review summarizers, CRMs, or generic AI report tools, Review-to-Revenue AI closes the loop between customer language, recommended action, and outcome data, creating a path toward revenue intelligence that learns which messages and actions actually recover revenue.
+Review-to-Revenue AI is a Revenue Action Platform for Customer Voice. In investor-facing language, it is building the Revenue Intelligence Layer for Customer Voice. The product converts unstructured customer language from reviews, inquiries, sales notes, competitor complaints, and lead data into weekly revenue actions: who to follow up with, what to send, what content to publish, what sales script to improve, and what competitor weakness to use. Unlike review summarizers, CRMs, or generic AI report tools, Review-to-Revenue AI closes the loop between customer language, recommended action, and outcome data, creating a path toward revenue intelligence that learns which messages and actions actually recover revenue.

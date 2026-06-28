@@ -649,7 +649,9 @@ Pricing rule:
 
 Timeframe:
 
-> 14 days.
+> 14 days as Phase 1 of the 90-day validation sprint.
+
+This 14-day plan does not justify product build by itself. It only decides whether the deeper 90-day evidence sprint is worth continuing.
 
 Goal:
 
@@ -675,7 +677,7 @@ Paid conversions:
 - Strong success: 3+ paid reports or 1 setup package.
 - Excellent success: 3+ paid reports plus 1 subscription or setup commitment.
 
-### 14-day schedule
+### 14-day Phase 1 schedule
 
 Days 1-2:
 
@@ -1108,9 +1110,9 @@ Mitigation:
 
 Stage 4B should be:
 
-> Master PRD based on Product Identity, Competitive Wedge, Category Design, and Business Model & PMF Blueprint.
+> Evidence Plan and Kill Criteria based on Product Identity, Competitive Wedge, Category Design, and Business Model & PMF Blueprint.
 
-The Master PRD should use these source documents:
+The evidence plan should use these source documents:
 
 - `company/CODEX_OPERATING_SYSTEM.md`
 - `company/01_PRODUCT_IDENTITY.md`
@@ -1136,6 +1138,8 @@ Stage 4B should define:
 - Non-goals.
 - PMF validation plan.
 - Technical constraints.
+- Kill criteria.
+- Evidence thresholds.
 
 Stage 4B should not:
 
@@ -1150,4 +1154,4 @@ Stage 4B should not:
 
 Decision:
 
-> Write the Master PRD next, then use it to decide what product surfaces should change.
+> Product build remains No-Go until evidence thresholds pass. Write the Master PRD only after the evidence sprint validates data sharing, paid demand, action execution, outcome reporting, and at least one recurring or setup signal.

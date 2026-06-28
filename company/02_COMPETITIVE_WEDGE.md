@@ -416,6 +416,24 @@ The adoption wedge:
 
 > Start as a lightweight action layer on top of messy customer language. Do not ask the customer to replace their CRM, review platform, or marketing stack.
 
+## 5A. Why Not Just ChatGPT?
+
+Customers may use ChatGPT to draft follow-up messages, content ideas, or script improvements from pasted notes.
+
+Review-to-Revenue AI must prove value beyond a prompt in these ways:
+
+- Better diagnosis: find the real objection pattern faster than a generic prompt.
+- Better evidence: tie every recommendation to specific customer language.
+- Better prioritization: show which revenue action matters first.
+- Better vertical judgment: understand Franchise / Business Consulting objections better than generic AI.
+- Better execution: produce messages and actions customers actually use.
+- Better outcome loop: track what happened and use outcomes to improve future recommendations.
+- Better packaging: create a Revenue Action Report buyers trust enough to pay for.
+
+Required validation:
+
+> Run the Stage 5B side-by-side ChatGPT comparison before claiming this is more than generic AI writing.
+
 ## 6. Initial Beachhead
 
 ### Franchise / Business Consulting
