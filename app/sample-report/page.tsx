@@ -137,14 +137,14 @@ export default function SampleReportPage() {
       <header className="topbar">
         <div className="topbar-inner">
           <a className="brand brand-link" href="/">
-            <span className="brand-mark">L</span>
+            <span className="brand-mark">R</span>
             <span>Review-to-Revenue AI</span>
           </a>
           <a className="top-link" href="/">
-            Analyzer
+            Dashboard
           </a>
-          <a className="top-link" href="/feedback">
-            Feedback
+          <a className="top-link" href="/outcomes">
+            Outcomes
           </a>
           <a className="top-link" href="/validation-kit">
             Validation
@@ -202,7 +202,7 @@ export default function SampleReportPage() {
           <p>48시간 내 2~3페이지 리포트</p>
           <a
             className="primary-link"
-            href="mailto:hello@example.com?subject=Review%20Lens%20Pilot%20Report"
+            href="mailto:hello@example.com?subject=Review-to-Revenue%20AI%20Pilot%20Report"
           >
             파일럿 문의
           </a>

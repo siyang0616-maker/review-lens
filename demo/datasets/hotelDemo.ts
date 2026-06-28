@@ -1,10 +1,10 @@
-import type { CustomerVoiceInput, DemoDataset } from "../../../types/revenue";
+import type { CustomerVoiceInput, DemoDataset } from "../../types/revenue";
 
 export const hotelDemoData: DemoDataset = {
   id: "korean-summer-hotel",
   industry: "Hospitality",
   language: "ko",
-  name: "Korea Summer Hotel Demo",
+  name: "Korean Summer Hotel Reviews",
   description:
     "Synthetic sample data for testing Review-to-Revenue AI with Korean summer vacation hotel reviews.",
   reviewsText: [

@@ -1,6 +1,6 @@
-import { hiddenSignals } from "../hidden-signals";
+import { languageSignals } from "./languageSignals";
 
-export type LensSignal = {
+export type LanguageSignalMatch = {
   label: string;
   phrase: string;
   meaning: string;
@@ -8,13 +8,13 @@ export type LensSignal = {
   severityHint: number;
 };
 
-export function extractInterpretationSignals(text: string): LensSignal[] {
-  return hiddenSignals.flatMap((signal) => {
+export function extractLanguageSignals(text: string): LanguageSignalMatch[] {
+  return languageSignals.flatMap((signal) => {
     const flags = signal.pattern.flags.includes("g")
       ? signal.pattern.flags
       : `${signal.pattern.flags}g`;
     const pattern = new RegExp(signal.pattern.source, flags);
-    const matches: LensSignal[] = [];
+    const matches: LanguageSignalMatch[] = [];
 
     for (const match of text.matchAll(pattern)) {
       if (!match[0]) {

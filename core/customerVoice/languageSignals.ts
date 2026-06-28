@@ -1,4 +1,4 @@
-export type HiddenSignal = {
+export type LanguageSignal = {
   language: string;
   pattern: RegExp;
   label: string;
@@ -9,7 +9,7 @@ export type HiddenSignal = {
   obfuscationType?: string;
 };
 
-export const hiddenSignals: HiddenSignal[] = [
+export const languageSignals: LanguageSignal[] = [
   {
     language: "ko",
     pattern: /굳이|구지|구지이/i,

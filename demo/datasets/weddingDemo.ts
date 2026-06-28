@@ -1,4 +1,4 @@
-import type { CustomerVoiceInput, DemoDataset } from "../../../types/revenue";
+import type { CustomerVoiceInput, DemoDataset } from "../../types/revenue";
 
 export const weddingDemoData: DemoDataset = {
   id: "english-wedding-vendor",

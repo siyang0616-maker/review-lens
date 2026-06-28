@@ -1084,6 +1084,21 @@ textarea:focus {
   color: var(--accent-strong);
 }
 
+.feedback-vote.copied,
+.feedback-vote.sent,
+.feedback-vote.replied,
+.feedback-vote.booked,
+.feedback-vote.won {
+  background: #eef6f4;
+  color: var(--accent-strong);
+}
+
+.feedback-vote.lost,
+.feedback-vote.ignored {
+  background: #fef3f2;
+  color: var(--risk);
+}
+
 .feedback-vote.overinterpreted,
 .feedback-vote.missed_signal {
   background: #fef3f2;

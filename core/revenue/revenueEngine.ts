@@ -13,11 +13,10 @@ import type {
   RevenueSignalType,
   SalesScriptSuggestion,
   SupportedLanguage,
-  UrgencyLevel,
-  WeeklyAction
+  UrgencyLevel
 } from "../../types/revenue";
-import { extractInterpretationSignals } from "./lensEngine";
-import { buildRevenueMarkdownReport } from "./reportBuilder";
+import { extractLanguageSignals } from "../customerVoice/languageEngine";
+import { buildRevenueMarkdownReport } from "../reports/markdownReport";
 
 type InsightDefinition = {
   id: string;
@@ -270,7 +269,7 @@ const competitorWeaknessDefinitions: InsightDefinition[] = [
   }
 ];
 
-export function analyzeRevenueSignals(input: CustomerVoiceInput): AnalysisResult {
+export function analyzeCustomerVoice(input: CustomerVoiceInput): AnalysisResult {
   const normalizedInput = normalizeInput(input);
   const inputSummary = summarizeInput(normalizedInput);
   const generatedAt = new Date().toISOString();
@@ -294,20 +293,23 @@ export function analyzeRevenueSignals(input: CustomerVoiceInput): AnalysisResult
       sourceLanguages: [outputLanguage],
       summary: emptyInputMessage,
       trustBarriers: [],
-      weeklyActionPlan: [],
       markdownReport: ""
     });
   }
 
-  const reviewLines = splitEvidence(normalizedInput.reviewsText);
+  const customerVoiceLines = splitEvidence(normalizedInput.reviewsText);
   const competitorLines = splitEvidence(normalizedInput.competitorReviewsText);
   const salesLines = splitEvidence(normalizedInput.salesNotesText);
   const leadRows = parseLeadRows(normalizedInput.salesNotesText, normalizedInput.leadCsv);
-  const customerLines = unique([...reviewLines, ...salesLines, ...leadRows.map((lead) => lead.raw)]);
+  const customerLines = unique([
+    ...customerVoiceLines,
+    ...salesLines,
+    ...leadRows.map((lead) => lead.raw)
+  ]);
   const allLines = unique([...customerLines, ...competitorLines]);
   const isHotelDemo = isHotelInput(normalizedInput, allLines);
   const sourceLanguages = detectSourceLanguages(normalizedInput, allLines);
-  const interpretationSignals = extractInterpretationSignals(allLines.join("\n"));
+  const languageSignalMatches = extractLanguageSignals(allLines.join("\n"));
 
   const painPoints = buildInsights(painPointDefinitions, customerLines);
   const objections = buildInsights(
@@ -338,7 +340,7 @@ export function analyzeRevenueSignals(input: CustomerVoiceInput): AnalysisResult
   const followupMessages = buildFollowupMessages(allLines, leadRescueOpportunities, isHotelDemo);
   const salesScriptSuggestions = buildSalesScriptSuggestions(
     allLines,
-    interpretationSignals.length,
+    languageSignalMatches.length,
     isHotelDemo
   );
   const revenueSignals = buildRevenueSignals({
@@ -352,7 +354,6 @@ export function analyzeRevenueSignals(input: CustomerVoiceInput): AnalysisResult
     salesScriptSuggestions,
     trustBarriers
   });
-  const weeklyActionPlan = buildWeeklyActionPlan(revenueSignals);
   const revenueActions = buildRevenueActions({
     competitorWeaknesses,
     contentIdeas,
@@ -382,7 +383,6 @@ export function analyzeRevenueSignals(input: CustomerVoiceInput): AnalysisResult
     sourceLanguages,
     summary: buildSummary(objections, leadRescueOpportunities, contentIdeas),
     trustBarriers,
-    weeklyActionPlan,
     markdownReport: ""
   });
 }
@@ -464,9 +464,9 @@ function detectSourceLanguages(
 
 function summarizeInput(input: CustomerVoiceInput): AnalysisResult["inputSummary"] {
   return {
-    competitorReviewLines: splitEvidence(input.competitorReviewsText).length,
+    competitorVoiceLines: splitEvidence(input.competitorReviewsText).length,
+    customerVoiceLines: splitEvidence(input.reviewsText).length,
     leadRows: parseCsv(input.leadCsv).length,
-    reviewLines: splitEvidence(input.reviewsText).length,
     salesNoteLines: splitEvidence(input.salesNotesText).length
   };
 }
@@ -496,7 +496,6 @@ function buildInsights(definitions: InsightDefinition[], evidenceLines: string[]
       return {
         category: definition.category,
         confidenceScore: confidenceFromEvidence(evidence.length, keywordHits),
-        description: definition.explanation,
         evidence: evidence.length > 0 ? evidence : [safeFallbackEvidence(evidenceLines)],
         explanation: definition.explanation,
         impact,
@@ -524,16 +523,12 @@ function buildLeadRescueOpportunities(leads: ParsedLead[]): LeadRescueOpportunit
         id: `lead-${index + 1}`,
         leadName: lead.leadName,
         likelyObjection: lead.tags[0] ?? "information_gap",
-        nextBestAction: recommendedMessage,
-        potentialValue: lead.expectedValue,
         recommendedMessage,
         rescueReason: reasons.join(" / "),
         score,
         segment: lead.tags.includes("brand_comparison") ? "brand comparison" : "warm inbound lead",
         status: lead.status,
-        suggestedMessage: recommendedMessage,
         tags: lead.tags,
-        urgency,
         urgencyLevel: urgency
       } satisfies LeadRescueOpportunity;
     })
@@ -567,7 +562,6 @@ function buildContentIdeas(input: {
         outline: ["총비용 확인", "조식 대기 시간", "주차 동선", "방음/객실 위치", "수영장 혼잡도"],
         priority: 1,
         sourceSignal: evidence,
-        suggestedHook: "8월 성수기 호텔은 객실가보다 조식, 주차, 방음, 수영장 혼잡도를 먼저 확인해야 합니다.",
         targetObjection: "summer hotel value uncertainty",
         title: "8월 성수기 호텔 예약 전 체크리스트",
         whyItWillWork: "고객이 결제 전에 반복 확인하는 조식, 주차, 방음, 수영장 혼잡도를 한 번에 처리합니다.",
@@ -582,7 +576,6 @@ function buildContentIdeas(input: {
         outline: ["정면뷰/측면뷰/일부뷰 구분", "층수 확인", "사진 요청", "환불/변경 조건", "도착 시간"],
         priority: 2,
         sourceSignal: evidence,
-        suggestedHook: "오션뷰도 정면뷰, 측면뷰, 일부뷰에 따라 만족도가 달라집니다.",
         targetObjection: "room view clarity",
         title: "오션뷰 객실 예약 전 확인해야 할 5가지",
         whyItWillWork: "사진과 실제 객실 차이에서 생기는 신뢰 장벽을 줄입니다.",
@@ -597,7 +590,6 @@ function buildContentIdeas(input: {
         outline: ["조식 피크 시간", "키즈풀 혼잡도", "객실 동선", "주차 위치", "짐 보관"],
         priority: 3,
         sourceSignal: evidence,
-        suggestedHook: "아이와 함께라면 조식과 수영장 혼잡도가 객실가만큼 중요합니다.",
         targetObjection: "family comfort",
         title: "아이 동반 호텔 선택 시 조식/수영장 혼잡도 보는 법",
         whyItWillWork: "가족 여행 리드에게 다시 연락할 명분을 제공합니다.",
@@ -612,7 +604,6 @@ function buildContentIdeas(input: {
         outline: ["엘리베이터 접근", "주차 거리", "조용한 층", "체크인 대기", "조식 좌석"],
         priority: 4,
         sourceSignal: evidence,
-        suggestedHook: "부모님을 모시고 가는 호텔은 뷰보다 주차, 엘리베이터, 방음 동선이 먼저입니다.",
         targetObjection: "family comfort",
         title: "부모님 모시고 호텔 갈 때 확인해야 할 동선/주차/방음",
         whyItWillWork: "부모님 동반 고객의 구매 기준을 구체화합니다.",
@@ -627,7 +618,6 @@ function buildContentIdeas(input: {
         outline: ["최근 사진 요청", "객실 크기", "욕실 상태", "뷰 방향", "성수기 배정 기준"],
         priority: 5,
         sourceSignal: evidence,
-        suggestedHook: "호텔 사진과 실제 객실 차이는 예약 전 질문으로 줄일 수 있습니다.",
         targetObjection: "expectation mismatch",
         title: "호텔 사진과 실제 객실 차이를 줄이는 예약 질문법",
         whyItWillWork: "경쟁 호텔의 사진/실제 불만을 우리 쪽 신뢰 메시지로 전환합니다.",
@@ -642,7 +632,6 @@ function buildContentIdeas(input: {
         outline: ["객실가", "조식 비용", "수영장 비용", "주차 비용", "추가요금/보증금"],
         priority: 6,
         sourceSignal: evidence,
-        suggestedHook: "성수기 호텔은 객실가, 조식, 수영장, 주차, 추가요금을 합쳐 비교해야 합니다.",
         targetObjection: "price and hidden cost",
         title: "성수기 호텔 총비용 계산법: 객실가, 조식, 수영장, 주차, 추가요금",
         whyItWillWork: "가격 부담 리드를 단순 할인 논의가 아니라 총비용 판단으로 전환합니다.",
@@ -661,7 +650,6 @@ function buildContentIdeas(input: {
       outline: ["월매출 착시", "고정비", "변동비", "회수기간", "상담 전 질문"],
       priority: 1,
       sourceSignal: evidence,
-      suggestedHook: "월매출보다 중요한 것은 내 통장에 남는 돈입니다.",
       targetObjection: "profit clarity",
       title: "월매출이 아니라 순수익과 회수기간으로 창업 판단하기",
       whyItWillWork: "반복되는 순수익/회수기간 질문을 상담 전에 해소합니다.",
@@ -676,7 +664,6 @@ function buildContentIdeas(input: {
       outline: ["초기비용", "리스크", "회수기간", "운영 부담", "가족 질문"],
       priority: 2,
       sourceSignal: findEvidenceFromInsights(input.objections, "family") ?? evidence,
-      suggestedHook: "가족이 반대하기 전에 먼저 보여줘야 할 숫자 5가지",
       targetObjection: "family approval",
       title: "배우자와 가족 설득용 창업 리스크 체크리스트",
       whyItWillWork: "숨은 구매위원회가 묻는 비용, 실패 리스크, 회수기간을 선제 답변합니다.",
@@ -691,7 +678,6 @@ function buildContentIdeas(input: {
       outline: ["투자금", "운영 난이도", "회수기간", "권리금", "리스크"],
       priority: 3,
       sourceSignal: findEvidenceFromInsights(input.objections, "comparison") ?? evidence,
-      suggestedHook: "메가커피와 컴포즈를 비교할 때 매출표만 보면 놓치는 것",
       targetObjection: "brand comparison",
       title: "브랜드 비교 중인 예비 창업자를 위한 판단 기준표",
       whyItWillWork: "비교 중인 리드가 더 많은 설명 대신 판단 기준을 받게 됩니다.",
@@ -706,7 +692,6 @@ function buildContentIdeas(input: {
       outline: ["예산 범위", "불가능한 선택지", "가능한 선택지", "리스크", "다음 상담"],
       priority: 4,
       sourceSignal: findEvidenceFromInsights(input.painPoints, "budget") ?? evidence,
-      suggestedHook: "내 예산으로 가능한 브랜드부터 봐야 상담 시간이 줄어듭니다.",
       targetObjection: "budget fit",
       title: "예산별 가능한 프랜차이즈 선택지 먼저 보기",
       whyItWillWork: "예산이 맞지 않는 선택지를 빨리 제외해 리드의 불확실성을 낮춥니다.",
@@ -881,7 +866,7 @@ function buildFollowupMessages(
 
 function buildSalesScriptSuggestions(
   evidenceLines: string[],
-  interpretationSignalCount: number,
+  languageSignalCount: number,
   isHotelDemo = false
 ): SalesScriptSuggestion[] {
   const proofEvidence = findEvidence(evidenceLines, ["자료", "근거", "부족", "명확"])[0];
@@ -908,9 +893,6 @@ function buildSalesScriptSuggestions(
         id: "hotel-script-total-value-before-price",
         improvedLine:
           "성수기 호텔은 객실가만 비교하면 실제 만족도를 판단하기 어렵습니다. 조식 혼잡도, 주차, 객실뷰, 방음, 수영장 이용 조건까지 같이 보셔야 총비용 대비 만족도가 맞습니다.",
-        improvedScript:
-          "성수기 호텔은 객실가만 비교하면 실제 만족도를 판단하기 어렵습니다. 조식 혼잡도, 주차, 객실뷰, 방음, 수영장 이용 조건까지 같이 보셔야 총비용 대비 만족도가 맞습니다.",
-        reason: "가격 반박을 할인 논의가 아니라 총비용 대비 만족도 판단으로 전환합니다.",
         situation: "가격만 묻는 성수기 호텔 리드",
         weakLine: "객실가는 1박 기준 이 금액입니다.",
         whyItWorks: "가격 반박을 할인 논의가 아니라 총비용 대비 만족도 판단으로 전환합니다."
@@ -921,12 +903,33 @@ function buildSalesScriptSuggestions(
         id: "hotel-script-view-clarity",
         improvedLine:
           "오션뷰도 고층 정면뷰, 측면뷰, 저층 일부뷰로 만족도가 달라집니다. 원하시는 뷰 수준에 따라 객실 타입을 구분해서 보시는 게 좋습니다.",
-        improvedScript:
-          "오션뷰도 고층 정면뷰, 측면뷰, 저층 일부뷰로 만족도가 달라집니다. 원하시는 뷰 수준에 따라 객실 타입을 구분해서 보시는 게 좋습니다.",
-        reason: "객실 사진과 실제 뷰 차이에서 생기는 신뢰 손실을 줄입니다.",
         situation: "오션뷰 기대치가 불명확한 리드",
         weakLine: "오션뷰 객실입니다.",
         whyItWorks: "객실 사진과 실제 뷰 차이에서 생기는 신뢰 손실을 줄입니다."
+      },
+      {
+        currentProblem: "부모님 동반 고객에게 주차, 엘리베이터, 조용한 객실 기준을 먼저 묻지 않는다.",
+        evidence:
+          findEvidence(evidenceLines, ["부모님", "엘리베이터", "조용한", "주차"])[0] ??
+          safeFallbackEvidence(evidenceLines),
+        id: "hotel-script-parents-mobility-comfort",
+        improvedLine:
+          "부모님과 함께 오시면 객실뷰보다 주차 위치, 엘리베이터 동선, 조용한 층 배정이 더 중요할 수 있습니다. 이 기준으로 먼저 객실을 좁혀드릴게요.",
+        situation: "부모님 동반 호텔 예약 리드",
+        weakLine: "가족 여행이면 이 객실도 괜찮습니다.",
+        whyItWorks: "부모님 동반 고객의 실제 불안을 가격 비교 전에 해결합니다."
+      },
+      {
+        currentProblem: "가족 여행객에게 조식, 수영장, 주차 동선을 예약 전에 묶어서 안내하지 않는다.",
+        evidence:
+          findEvidence(evidenceLines, ["아이", "가족", "조식", "수영장", "주차"])[0] ??
+          safeFallbackEvidence(evidenceLines),
+        id: "hotel-script-family-flow-first",
+        improvedLine:
+          "아이와 함께 오시면 객실 크기만큼 조식 대기 시간, 수영장 피크 시간, 주차 동선이 중요합니다. 가족 동선 기준으로 불편한 시간대를 먼저 피해서 안내드릴게요.",
+        situation: "가족 여행객 호텔 예약 리드",
+        weakLine: "가족분들도 많이 예약하시는 객실입니다.",
+        whyItWorks: "가족 여행객의 만족도를 좌우하는 현장 불편을 사전에 줄입니다."
       }
     );
   }
@@ -938,9 +941,6 @@ function buildSalesScriptSuggestions(
       id: "script-proof-before-pitch",
       improvedLine:
         "좋은 매물이라는 말보다 먼저 판단 기준을 보여드리겠습니다. 투자금, 예상 순수익, 회수기간, 리스크를 한 장으로 보고 맞지 않는 조건은 바로 제외하겠습니다.",
-      improvedScript:
-        "좋은 매물이라는 말보다 먼저 판단 기준을 보여드리겠습니다. 투자금, 예상 순수익, 회수기간, 리스크를 한 장으로 보고 맞지 않는 조건은 바로 제외하겠습니다.",
-      reason: "추상적 설득을 숫자와 제외 기준으로 바꿔 신뢰 장벽을 낮춥니다.",
       situation: "근거 자료가 부족하다고 느끼는 리드",
       weakLine: "이 매물은 괜찮고 요즘 문의가 많습니다.",
       whyItWorks: "추상적 설득을 숫자와 제외 기준으로 바꿔 신뢰 장벽을 낮춥니다."
@@ -954,9 +954,6 @@ function buildSalesScriptSuggestions(
       id: "script-profit-before-sales",
       improvedLine:
         "월매출은 참고값이고, 결정은 순수익과 회수기간으로 보시는 게 맞습니다. 먼저 고정비와 변동비를 나눠 현실적인 범위를 계산해보겠습니다.",
-      improvedScript:
-        "월매출은 참고값이고, 결정은 순수익과 회수기간으로 보시는 게 맞습니다. 먼저 고정비와 변동비를 나눠 현실적인 범위를 계산해보겠습니다.",
-      reason: "고객의 실제 판단 질문에 맞춰 상담 순서를 바꿉니다.",
       situation: "월매출 설명만으로 감이 오지 않는 리드",
       weakLine: "월매출은 이 정도까지 나올 수 있습니다.",
       whyItWorks: "고객의 실제 판단 질문에 맞춰 상담 순서를 바꿉니다."
@@ -970,9 +967,6 @@ function buildSalesScriptSuggestions(
       id: "script-family-buyer-committee",
       improvedLine:
         "가족분이 가장 걱정하실 부분은 비용, 실패 리스크, 회수기간일 가능성이 큽니다. 같이 보실 수 있게 1페이지 요약으로 정리해드릴게요.",
-      improvedScript:
-        "가족분이 가장 걱정하실 부분은 비용, 실패 리스크, 회수기간일 가능성이 큽니다. 같이 보실 수 있게 1페이지 요약으로 정리해드릴게요.",
-      reason: "결정권자 밖의 반박까지 상담 흐름 안으로 끌어옵니다.",
       situation: "가족 또는 배우자 상의가 필요한 리드",
       weakLine: "상의해보시고 연락 주세요.",
       whyItWorks: "결정권자 밖의 반박까지 상담 흐름 안으로 끌어옵니다."
@@ -986,25 +980,19 @@ function buildSalesScriptSuggestions(
       id: "script-comparison-frame",
       improvedLine:
         "두 브랜드를 매출만으로 비교하면 위험합니다. 투자금, 운영 강도, 순수익, 회수기간을 같은 기준으로 놓고 어떤 조건이 맞지 않는지 먼저 지우겠습니다.",
-      improvedScript:
-        "두 브랜드를 매출만으로 비교하면 위험합니다. 투자금, 운영 강도, 순수익, 회수기간을 같은 기준으로 놓고 어떤 조건이 맞지 않는지 먼저 지우겠습니다.",
-      reason: "모호한 비교를 의사결정 가능한 기준표로 바꿉니다.",
       situation: "브랜드를 비교 중인 리드",
       weakLine: "둘 다 장단점이 있습니다.",
       whyItWorks: "모호한 비교를 의사결정 가능한 기준표로 바꿉니다."
     });
   }
 
-  if (suggestions.length === 0 && interpretationSignalCount > 0) {
+  if (suggestions.length === 0 && languageSignalCount > 0) {
     suggestions.push({
       currentProblem: "완곡한 불안을 직접 다루지 않고 재연락을 기다림",
       evidence: "고객 텍스트에 숨은 부정 신호가 포함되어 있습니다.",
       id: "script-hidden-signal",
       improvedLine:
         "걱정되는 부분을 그냥 넘기지 않고, 비용과 리스크 기준으로 다시 정리해서 판단하실 수 있게 도와드리겠습니다.",
-      improvedScript:
-        "걱정되는 부분을 그냥 넘기지 않고, 비용과 리스크 기준으로 다시 정리해서 판단하실 수 있게 도와드리겠습니다.",
-      reason: "완곡한 불안을 직접 다뤄 다음 대화를 만듭니다.",
       situation: "표면적으로는 약하지만 내부 경고가 있는 텍스트",
       weakLine: "괜찮으시면 다시 연락 주세요.",
       whyItWorks: "완곡한 불안을 직접 다뤄 다음 대화를 만듭니다."
@@ -1044,7 +1032,7 @@ function buildRevenueActions(input: {
       evidence: [message.evidence],
       expectedOutcome: "Recover a stalled conversation and move the lead to a concrete next step.",
       id: `action-follow-up-${index + 1}`,
-      potentialValue: matchingLead?.potentialValue ?? matchingLead?.expectedValue,
+      potentialValue: matchingLead?.expectedValue,
       primaryCTA: "View follow-up messages",
       priority: index < 3 ? "high" : "medium",
       recommendedAction: message.message,
@@ -1140,7 +1128,19 @@ function buildRevenueActions(input: {
     });
   }
 
-  return actions.slice(0, 12);
+  return prioritizeActionMix(actions).slice(0, 12);
+}
+
+function prioritizeActionMix(actions: RevenueAction[]) {
+  const firstFollowUp = actions.find((action) => action.type === "follow_up");
+  const firstContent = actions.find((action) => action.type === "content");
+  const firstScript = actions.find((action) => action.type === "script");
+  const pinned = [firstFollowUp, firstContent, firstScript].filter(
+    (action): action is RevenueAction => Boolean(action)
+  );
+  const pinnedIds = new Set(pinned.map((action) => action.id));
+
+  return [...pinned, ...actions.filter((action) => !pinnedIds.has(action.id))];
 }
 
 function buildRevenueSignals(input: {
@@ -1247,64 +1247,6 @@ function buildRevenueSignals(input: {
         })
       : null
   ].filter((item): item is RevenueSignal => Boolean(item));
-}
-
-function buildWeeklyActionPlan(signals: RevenueSignal[]): WeeklyAction[] {
-  const actionMap: Record<
-    RevenueSignalType,
-    Omit<WeeklyAction, "id" | "priority" | "day" | "purpose">
-  > = {
-    competitor_weakness: {
-      action: "경쟁사 약점 1개를 랜딩/상담 오프닝/후속 메시지에 같은 문장으로 반영",
-      due: "금요일",
-      expectedOutcome: "비교 중인 리드에게 선택 기준을 명확히 제공",
-      owner: "Growth",
-      sourceSignalType: "competitor_weakness"
-    },
-    content_to_publish: {
-      action: "순수익/회수기간/예산 적합성 콘텐츠 1개 발행",
-      due: "목요일",
-      expectedOutcome: "반복 질문을 콘텐츠로 선제 처리",
-      owner: "Marketing",
-      sourceSignalType: "content_to_publish"
-    },
-    leads_to_rescue: {
-      action: "상위 rescue lead 5명에게 맞춤 follow-up 발송",
-      due: "내일",
-      expectedOutcome: "미응답 리드를 상담 재개 상태로 전환",
-      owner: "Sales",
-      sourceSignalType: "leads_to_rescue"
-    },
-    script_to_improve: {
-      action: "상담 스크립트 첫 5분을 비용/근거/리스크 중심으로 수정",
-      due: "내일",
-      expectedOutcome: "상담 후 이탈과 자료 요청 대기 시간을 단축",
-      owner: "Sales",
-      sourceSignalType: "script_to_improve"
-    },
-    top_buying_trigger: {
-      action: "구매 트리거가 나온 질문에 24시간 내 자료 follow-up 규칙 적용",
-      due: "수요일",
-      expectedOutcome: "구매 의도 리드의 검토 속도 상승",
-      owner: "Sales Ops",
-      sourceSignalType: "top_buying_trigger"
-    },
-    top_customer_objection: {
-      action: "가격/순수익/회수기간/리스크 1페이지 반박 자료 제작",
-      due: "내일",
-      expectedOutcome: "가장 큰 상담 병목을 같은 자료로 반복 제거",
-      owner: "Founder",
-      sourceSignalType: "top_customer_objection"
-    }
-  };
-
-  return signals.map((signalItem, index) => ({
-    ...actionMap[signalItem.type],
-    day: actionMap[signalItem.type].due,
-    id: `weekly-action-${index + 1}`,
-    purpose: actionMap[signalItem.type].expectedOutcome,
-    priority: index + 1
-  }));
 }
 
 function buildSummary(
@@ -1652,9 +1594,7 @@ function signal(input: {
 
   return {
     ...input,
-    confidence,
     confidenceScore: confidence,
-    description: input.whyItMatters,
     evidence: [evidenceSnippet],
     evidenceItems: [
       {
@@ -1663,8 +1603,8 @@ function signal(input: {
       }
     ],
     evidenceSnippet,
-    impact: input.impactLevel,
-    urgency: input.urgencyLevel
+    impactLevel: input.impactLevel,
+    urgencyLevel: input.urgencyLevel
   };
 }
 

@@ -1,4 +1,4 @@
-import type { CustomerVoiceInput, DemoDataset } from "../../../types/revenue";
+import type { CustomerVoiceInput, DemoDataset } from "../../types/revenue";
 import { clinicDemoData, clinicDemoInput } from "./clinicDemo";
 import { hotelDemoData, hotelDemoInput } from "./hotelDemo";
 import { weddingDemoData, weddingDemoInput } from "./weddingDemo";

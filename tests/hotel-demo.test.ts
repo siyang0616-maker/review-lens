@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { buildRevenueMarkdownReport } from "../lib/analysis/reportBuilder";
-import { analyzeRevenueSignals } from "../lib/analysis/revenueSignalEngine";
-import { hotelDemoData, hotelDemoInput } from "../src/lib/sampleData";
+import { buildRevenueMarkdownReport } from "../core/reports/markdownReport";
+import { analyzeCustomerVoice } from "../core/revenue/revenueEngine";
+import { hotelDemoData, hotelDemoInput } from "../demo/datasets";
 
 describe("hotel demo data", () => {
   it("includes complete synthetic hotel demo input fields", () => {
-    expect(hotelDemoData.name).toBe("Korea Summer Hotel Demo");
+    expect(hotelDemoData.name).toBe("Korean Summer Hotel Reviews");
     expect(hotelDemoData.description).toContain("Synthetic sample data");
     expect(hotelDemoData.reviewsText.split("\n").filter(Boolean).length).toBeGreaterThanOrEqual(30);
     expect(hotelDemoData.competitorReviewsText.split("\n").filter(Boolean).length).toBeGreaterThanOrEqual(20);
@@ -17,7 +17,7 @@ describe("hotel demo data", () => {
   });
 
   it("turns hotel demo input into all six revenue signals", () => {
-    const result = analyzeRevenueSignals(hotelDemoInput);
+    const result = analyzeCustomerVoice(hotelDemoInput);
 
     expect(result.revenueSignals.map((signal) => signal.type)).toEqual([
       "top_customer_objection",
@@ -32,7 +32,7 @@ describe("hotel demo data", () => {
   });
 
   it("captures hotel-specific revenue concerns and triggers", () => {
-    const result = analyzeRevenueSignals(hotelDemoInput);
+    const result = analyzeCustomerVoice(hotelDemoInput);
     const haystack = [
       ...result.objections.map((item) => `${item.title} ${item.explanation}`),
       ...result.buyingTriggers.map((item) => `${item.title} ${item.explanation}`),
@@ -53,7 +53,7 @@ describe("hotel demo data", () => {
   });
 
   it("creates hotel follow-up messages for family and price concerns", () => {
-    const result = analyzeRevenueSignals(hotelDemoInput);
+    const result = analyzeCustomerVoice(hotelDemoInput);
     const messages = result.followupMessages.map((message) => message.message).join("\n");
 
     expect(result.followupMessages.some((message) => message.scenario === "family_discussion")).toBe(true);
@@ -64,7 +64,7 @@ describe("hotel demo data", () => {
   });
 
   it("includes the demo label in markdown export", () => {
-    const result = analyzeRevenueSignals(hotelDemoInput);
+    const result = analyzeCustomerVoice(hotelDemoInput);
     const markdown = buildRevenueMarkdownReport(result);
 
     expect(markdown).toContain("Demo Data · Synthetic Korean Summer Hotel Reviews");

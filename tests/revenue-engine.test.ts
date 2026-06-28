@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { buildRevenueMarkdownReport } from "../lib/analysis/reportBuilder";
-import { analyzeRevenueSignals } from "../lib/analysis/revenueSignalEngine";
-import { sampleCustomerVoiceInput } from "../lib/analysis/sampleData";
+import { buildRevenueMarkdownReport } from "../core/reports/markdownReport";
+import { analyzeCustomerVoice } from "../core/revenue/revenueEngine";
+import { hotelDemoInput } from "../demo/datasets";
 
 const requiredSignalTypes = [
   "top_customer_objection",
@@ -14,29 +14,25 @@ const requiredSignalTypes = [
 
 describe("review-to-revenue engine", () => {
   it("turns sample customer voice into six revenue signals", () => {
-    const result = analyzeRevenueSignals(sampleCustomerVoiceInput);
+    const result = analyzeCustomerVoice(hotelDemoInput);
 
     expect(result.revenueSignals).toHaveLength(6);
     expect(result.revenueSignals.map((signal) => signal.type)).toEqual(requiredSignalTypes);
 
     for (const signal of result.revenueSignals) {
       expect(signal.title).not.toHaveLength(0);
-      expect(signal.description).not.toHaveLength(0);
       expect(signal.whyItMatters).not.toHaveLength(0);
       expect(signal.evidence.length).toBeGreaterThan(0);
       expect(signal.evidenceSnippet).not.toHaveLength(0);
       expect(signal.recommendedAction).not.toHaveLength(0);
-      expect(signal.confidence).toBe(signal.confidenceScore);
       expect(signal.confidenceScore).toBeGreaterThanOrEqual(40);
-      expect(signal.urgency).toBe(signal.urgencyLevel);
       expect(["low", "medium", "high"]).toContain(signal.urgencyLevel);
-      expect(signal.impact).toBe(signal.impactLevel);
       expect(["low", "medium", "high"]).toContain(signal.impactLevel);
     }
   });
 
   it("builds a markdown report with every required section", () => {
-    const result = analyzeRevenueSignals(sampleCustomerVoiceInput);
+    const result = analyzeCustomerVoice(hotelDemoInput);
     const markdown = buildRevenueMarkdownReport(result);
 
     expect(result.markdownReport).toBe(markdown);
@@ -57,7 +53,7 @@ describe("review-to-revenue engine", () => {
   });
 
   it("creates follow-up messages for family, price, and comparison objections", () => {
-    const result = analyzeRevenueSignals(sampleCustomerVoiceInput);
+    const result = analyzeCustomerVoice(hotelDemoInput);
     const scenarios = result.followupMessages.map((message) => message.scenario);
 
     expect(scenarios).toContain("family_discussion");
@@ -71,7 +67,7 @@ describe("review-to-revenue engine", () => {
   });
 
   it("handles empty input without crashing", () => {
-    const result = analyzeRevenueSignals({
+    const result = analyzeCustomerVoice({
       competitorReviewsText: "",
       leadCsv: "",
       reviewsText: "",
@@ -82,40 +78,40 @@ describe("review-to-revenue engine", () => {
     expect(result.summary).toContain(
       "Load sample data or paste customer voice data to generate signals"
     );
-    expect(result.weeklyActionPlan).toHaveLength(0);
+    expect(result.revenueActions).toHaveLength(0);
     expect(result.markdownReport).toContain("Load sample data or paste customer voice data");
   });
 
-  it("keeps requested compatibility fields for downstream API and CRM integrations", () => {
-    const result = analyzeRevenueSignals(sampleCustomerVoiceInput);
+  it("uses RevenueAction as the executable weekly plan entity", () => {
+    const result = analyzeCustomerVoice(hotelDemoInput);
     const lead = result.leadRescueOpportunities[0];
     const content = result.contentIdeas[0];
     const script = result.salesScriptSuggestions[0];
-    const action = result.weeklyActionPlan[0];
+    const action = result.revenueActions[0];
 
     expect(lead.segment).not.toHaveLength(0);
     expect(lead.status).not.toHaveLength(0);
     expect(lead.likelyObjection).not.toHaveLength(0);
-    expect(lead.nextBestAction).toBe(lead.recommendedMessage);
-    expect(lead.suggestedMessage).toBe(lead.recommendedMessage);
-    expect(lead.urgency).toBe(lead.urgencyLevel);
-    expect(lead.potentialValue).toBe(lead.expectedValue);
+    expect(lead.recommendedMessage).not.toHaveLength(0);
+    expect(lead.expectedValue).not.toHaveLength(0);
 
     expect(content.angle).not.toHaveLength(0);
     expect(content.targetObjection).not.toHaveLength(0);
-    expect(content.suggestedHook).toBe(content.hook);
+    expect(content.hook).not.toHaveLength(0);
     expect(content.whyItWillWork).not.toHaveLength(0);
 
     expect(script.currentProblem).not.toHaveLength(0);
-    expect(script.improvedScript).toBe(script.improvedLine);
-    expect(script.reason).toBe(script.whyItWorks);
+    expect(script.improvedLine).not.toHaveLength(0);
+    expect(script.whyItWorks).not.toHaveLength(0);
 
-    expect(action.day).toBe(action.due);
-    expect(action.purpose).toBe(action.expectedOutcome);
+    expect(action.title).not.toHaveLength(0);
+    expect(action.recommendedAction).not.toHaveLength(0);
+    expect(action.expectedOutcome).not.toHaveLength(0);
+    expect(action.status).toBe("ready");
   });
 
   it("excludes closed leads from rescue candidates", () => {
-    const result = analyzeRevenueSignals({
+    const result = analyzeCustomerVoice({
       competitorReviewsText: "",
       leadCsv: [
         "name,budget,status,days_since_last_contact,last_note",

@@ -7,8 +7,7 @@ import type {
   OutcomeSummary,
   RevenueAction,
   RevenueSignal,
-  SalesScriptSuggestion,
-  WeeklyAction
+  SalesScriptSuggestion
 } from "../../types/revenue";
 
 type ReportOptions = {
@@ -94,7 +93,7 @@ ${formatInsights(result.trustBarriers)}
 
 ## Weekly Action Plan
 
-${formatActions(result.weeklyActionPlan)}
+${formatWeeklyActionPlan(result.revenueActions)}
 `;
 }
 
@@ -260,7 +259,7 @@ function formatOutcomeSummary(summary: OutcomeSummary) {
   ].join("\n");
 }
 
-function formatActions(actions: WeeklyAction[] | undefined) {
+function formatWeeklyActionPlan(actions: RevenueAction[] | undefined) {
   const safeActions = actions ?? [];
 
   if (safeActions.length === 0) {
@@ -268,11 +267,13 @@ function formatActions(actions: WeeklyAction[] | undefined) {
   }
 
   return safeActions
+    .slice(0, 6)
     .map(
-      (action) => `- P${action.priority}. ${action.action}
-  - Owner: ${action.owner}
-  - Due: ${action.due}
-  - Expected outcome: ${action.expectedOutcome}`
+      (action, index) => `- P${index + 1}. ${action.title}
+  - Type: ${action.type}
+  - Action: ${action.recommendedAction}
+  - Expected outcome: ${action.expectedOutcome}
+  - Status: ${action.status}`
     )
     .join("\n");
 }

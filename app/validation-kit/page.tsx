@@ -1,10 +1,10 @@
-const travelerQuestions = [
+const revenueTeamQuestions = [
   "이 결과가 일반 리뷰/상담 메모 요약보다 더 실행 가능하다고 느끼나요?",
   "원문만 봤을 때와 Review-to-Revenue AI 결과를 봤을 때 이번 주 액션 판단이 바뀌었나요?",
   "이 정보를 보면 실제 follow-up, 콘텐츠, 상담 스크립트를 바꿀 가능성이 있나요?",
   "어떤 문장이 근거로 가장 설득력 있었나요?",
   "과하게 추측한다고 느껴지는 부분이 있었나요?",
-  "이 도구를 친구에게 보내고 싶을 만한 상황은 언제인가요?"
+  "팀에 공유한다면 어떤 역할의 사람이 먼저 써야 하나요?"
 ];
 
 const ownerQuestions = [
@@ -18,22 +18,22 @@ const ownerQuestions = [
 ];
 
 const interviewFlow = [
-  "참가자 ID를 먼저 부여하고 traveler 또는 owner로 표시",
+  "참가자 ID를 먼저 부여하고 sales, marketing, owner 중 하나로 표시",
   "원문 고객 텍스트만 먼저 보여주고 이번 주 액션 판단을 묻기",
-  "그다음 Analyzer에서 같은 텍스트를 실행하고 판단이 바뀌었는지 확인",
-  "결과 하단의 품질 피드백 버튼 중 하나를 누르게 하기",
-  "여행자는 예약 판단 질문, 사업자는 운영 액션 질문을 묻기",
-  "/feedback에서 누적 반응을 확인하고 CSV로 저장",
+  "그다음 Dashboard에서 같은 텍스트를 실행하고 판단이 바뀌었는지 확인",
+  "Revenue Action을 하나 복사하거나 상태를 변경하게 하기",
+  "세일즈/마케팅/오너별로 실제 실행 가능성을 묻기",
+  "/outcomes에서 outcome 기록을 확인하고 CSV로 저장",
   "정성 답변은 아래 기록 양식에 그대로 붙여넣기"
 ];
 
 const successSignals = [
   {
-    label: "B2C continue",
+    label: "Sales continue",
     items: [
-      "여행자 3명 중 2명 이상이 번역 대비 판단 변화가 있었다고 말한다",
-      "여행자 3명 중 2명 이상이 친구에게 보낼 상황을 말한다",
-      "여행자 피드백에서 과해석보다 맞음/도움 반응이 많다"
+      "세일즈 후보 3명 중 2명 이상이 오늘 연락할 리드를 고른다",
+      "세일즈 후보 3명 중 2명 이상이 follow-up 메시지를 그대로 쓰거나 수정해 쓰겠다고 말한다",
+      "상담 스크립트 개선안이 실제 대화에 적용 가능하다는 반응이 많다"
     ]
   },
   {
@@ -47,10 +47,10 @@ const successSignals = [
   {
     label: "Narrow or pivot",
     items: [
-      "한국어 난독화에는 반응하지만 일본어/중국어는 애매하다",
-      "여행자는 흥미를 느끼지만 B2B 지불 의향이 약하다",
-      "대부분 번역기와 차이를 못 느낀다",
-      "근거 표현이 약하다는 피드백이 반복된다"
+      "흥미는 있지만 실제 follow-up이나 콘텐츠 작업으로 이어지지 않는다",
+      "B2B 지불 의향이 약하다",
+      "대부분 일반 요약 도구와 차이를 못 느낀다",
+      "근거 표현이나 실행 액션이 약하다는 피드백이 반복된다"
     ]
   }
 ];
@@ -92,18 +92,18 @@ export default function ValidationKitPage() {
       <header className="topbar">
         <div className="topbar-inner">
           <a className="brand brand-link" href="/">
-            <span className="brand-mark">L</span>
+            <span className="brand-mark">R</span>
             <span>Review-to-Revenue AI</span>
           </a>
           <div className="topbar-actions">
             <a className="top-link" href="/">
-              Analyzer
+              Dashboard
             </a>
             <a className="top-link" href="/sample-report">
               Sample report
             </a>
-            <a className="top-link" href="/feedback">
-              Feedback
+            <a className="top-link" href="/outcomes">
+              Outcomes
             </a>
           </div>
         </div>
@@ -125,7 +125,7 @@ export default function ValidationKitPage() {
             <strong>5 interviews</strong>
           </div>
           <div>
-            <span>Traveler</span>
+            <span>Sales / Growth</span>
             <strong>3 people</strong>
           </div>
           <div>
@@ -139,7 +139,7 @@ export default function ValidationKitPage() {
         <div className="validation-grid">
           <ValidationCard title="Screening" items={screeningQuestions} />
           <ValidationCard title="Run order" items={interviewFlow} />
-          <ValidationCard title="Traveler questions" items={travelerQuestions} />
+          <ValidationCard title="Revenue team questions" items={revenueTeamQuestions} />
           <ValidationCard title="Owner questions" items={ownerQuestions} />
         </div>
       </section>
@@ -192,7 +192,7 @@ export default function ValidationKitPage() {
               <span>Session ID</span>
               <span>Baseline translation decision</span>
               <span>Review-to-Revenue AI action change</span>
-              <span>Feedback button selected</span>
+              <span>Revenue action copied or status changed</span>
               <span>Most useful sentence</span>
               <span>Confusing or overinterpreted part</span>
               <span>Would they share or pay?</span>
@@ -222,7 +222,7 @@ export default function ValidationKitPage() {
           <div className="side-panel">
             <h2>After 5 Interviews</h2>
             <ol className="action-list">
-              <li>`/feedback` CSV와 정성 답변을 합친다.</li>
+              <li>`/outcomes` CSV와 정성 답변을 합친다.</li>
               <li>과해석, 신호 누락, 액션 약함을 각각 3개 이하로 묶는다.</li>
               <li>가장 반복되는 실패 1개만 다음 개발 대상으로 고른다.</li>
               <li>유료 의향이 있으면 lead capture를 먼저 만든다.</li>

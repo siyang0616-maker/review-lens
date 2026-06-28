@@ -6,31 +6,38 @@ import {
   applyOutcomesToActions,
   mergeActionOutcome,
   summarizeActionOutcomes
-} from "@/lib/analysis/actionOutcomes";
-import { parseMoney } from "@/lib/analysis/money";
-import { buildRevenueMarkdownReport } from "@/lib/analysis/reportBuilder";
-import { analyzeRevenueSignals } from "@/lib/analysis/revenueSignalEngine";
+} from "@/core/outcomes/actionOutcomes";
+import { parseMoney } from "@/shared/money";
+import { buildRevenueMarkdownReport } from "@/core/reports/markdownReport";
+import { analyzeCustomerVoice } from "@/core/revenue/revenueEngine";
+import {
+  ContentCard,
+  FollowupCard,
+  MetricCard,
+  RevenueActionCard,
+  ScriptSuggestionCard,
+  SectionHeader,
+  SignalCard,
+  TextAreaField,
+  type ContentIdeaStatus
+} from "@/ui/revenue/RevenueWorkspaceComponents";
 import {
   demoDatasets,
   hotelDemoInput,
   inputForDemoDataset
-} from "@/src/lib/sampleData";
+} from "@/demo/datasets";
 import type {
   ActionOutcome,
   ActionStatus,
   AnalysisResult,
-  ContentIdea,
   CustomerVoiceInput,
-  FollowupMessage,
-  ImpactLevel,
   RevenueAction,
-  RevenueSignal,
-  SalesScriptSuggestion,
   SupportedLanguage,
-  UrgencyLevel
 } from "@/types/revenue";
 
 const storageKey = "reviewToRevenueWorkspace.v1";
+const followupMessageStorageKey = "reviewToRevenue.followupMessages";
+const contentIdeaStatusStorageKey = "reviewToRevenue.contentIdeas";
 
 const emptyInput: CustomerVoiceInput = {
   competitorReviewsText: "",
@@ -39,6 +46,8 @@ const emptyInput: CustomerVoiceInput = {
   reviewsText: "",
   salesNotesText: ""
 };
+const initialDemoInput: CustomerVoiceInput = { ...hotelDemoInput, outputLanguage: "en" };
+const initialDemoResult = analyzeCustomerVoice(initialDemoInput);
 
 type SavedWorkspace = {
   input: CustomerVoiceInput;
@@ -57,14 +66,18 @@ const signalLabels = [
 ];
 
 export default function Home() {
-  const [input, setInput] = useState<CustomerVoiceInput>(emptyInput);
-  const [result, setResult] = useState<AnalysisResult | null>(null);
-  const [activeSignalId, setActiveSignalId] = useState<string | null>(null);
+  const [input, setInput] = useState<CustomerVoiceInput>(initialDemoInput);
+  const [result, setResult] = useState<AnalysisResult | null>(initialDemoResult);
+  const [activeSignalId, setActiveSignalId] = useState<string | null>(
+    initialDemoResult.revenueSignals[0]?.id ?? null
+  );
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [hasLoadedStorage, setHasLoadedStorage] = useState(false);
   const [selectedDatasetId, setSelectedDatasetId] = useState(demoDatasets[0].id);
   const [outputLanguage, setOutputLanguage] = useState<SupportedLanguage>("en");
   const [actionOutcomes, setActionOutcomes] = useState<ActionOutcome[]>([]);
+  const [sentFollowupIds, setSentFollowupIds] = useState<string[]>([]);
+  const [contentStatuses, setContentStatuses] = useState<Record<string, ContentIdeaStatus>>({});
 
   const canAnalyze = [
     input.competitorReviewsText,
@@ -94,7 +107,7 @@ export default function Home() {
   const revenueAtRisk = useMemo(
     () =>
       result?.leadRescueOpportunities.reduce(
-        (total, lead) => total + parseMoney(lead.potentialValue ?? lead.expectedValue),
+        (total, lead) => total + parseMoney(lead.expectedValue),
         0
       ) ?? 0,
     [result]
@@ -103,18 +116,30 @@ export default function Home() {
   useEffect(() => {
     const saved = window.localStorage.getItem(storageKey);
     const savedOutcomes = window.localStorage.getItem(actionOutcomesStorageKey);
+    const savedFollowups = window.localStorage.getItem(followupMessageStorageKey);
+    const savedContentStatuses = window.localStorage.getItem(contentIdeaStatusStorageKey);
+    let shouldLoadInitialDemo = !saved;
 
     if (saved) {
       try {
         const parsed = JSON.parse(saved) as SavedWorkspace;
         const savedResult = isCompatibleAnalysisResult(parsed.result) ? parsed.result : null;
-        setInput(parsed.input ?? emptyInput);
-        setResult(savedResult);
-        setSelectedDatasetId(parsed.selectedDatasetId ?? demoDatasets[0].id);
-        setOutputLanguage(parsed.outputLanguage ?? parsed.input?.outputLanguage ?? "en");
-        setActiveSignalId(savedResult?.revenueSignals[0]?.id ?? null);
+        const savedInput = parsed.input ?? emptyInput;
+        const savedLanguage = parsed.outputLanguage ?? savedInput.outputLanguage ?? "en";
+
+        if (savedResult || hasCustomerVoiceInput(savedInput)) {
+          setInput(savedInput);
+          setResult(savedResult);
+          setSelectedDatasetId(parsed.selectedDatasetId ?? demoDatasets[0].id);
+          setOutputLanguage(savedLanguage);
+          setActiveSignalId(savedResult?.revenueSignals[0]?.id ?? null);
+          shouldLoadInitialDemo = false;
+        } else {
+          shouldLoadInitialDemo = true;
+        }
       } catch {
         window.localStorage.removeItem(storageKey);
+        shouldLoadInitialDemo = true;
       }
     }
 
@@ -124,6 +149,26 @@ export default function Home() {
       } catch {
         window.localStorage.removeItem(actionOutcomesStorageKey);
       }
+    }
+
+    if (savedFollowups) {
+      try {
+        setSentFollowupIds(JSON.parse(savedFollowups) as string[]);
+      } catch {
+        window.localStorage.removeItem(followupMessageStorageKey);
+      }
+    }
+
+    if (savedContentStatuses) {
+      try {
+        setContentStatuses(JSON.parse(savedContentStatuses) as Record<string, ContentIdeaStatus>);
+      } catch {
+        window.localStorage.removeItem(contentIdeaStatusStorageKey);
+      }
+    }
+
+    if (shouldLoadInitialDemo) {
+      loadInitialDemoDataset();
     }
 
     setHasLoadedStorage(true);
@@ -148,12 +193,28 @@ export default function Home() {
     window.localStorage.setItem(actionOutcomesStorageKey, JSON.stringify(actionOutcomes));
   }, [actionOutcomes, hasLoadedStorage]);
 
+  useEffect(() => {
+    if (!hasLoadedStorage) {
+      return;
+    }
+
+    window.localStorage.setItem(followupMessageStorageKey, JSON.stringify(sentFollowupIds));
+  }, [hasLoadedStorage, sentFollowupIds]);
+
+  useEffect(() => {
+    if (!hasLoadedStorage) {
+      return;
+    }
+
+    window.localStorage.setItem(contentIdeaStatusStorageKey, JSON.stringify(contentStatuses));
+  }, [contentStatuses, hasLoadedStorage]);
+
   function updateInput(field: keyof CustomerVoiceInput, value: string) {
     setInput((current) => ({ ...current, [field]: value }));
   }
 
   function runAnalysis(nextInput = input) {
-    const nextResult = analyzeRevenueSignals({ ...nextInput, outputLanguage });
+    const nextResult = analyzeCustomerVoice({ ...nextInput, outputLanguage });
     setInput({ ...nextInput, outputLanguage });
     setResult(nextResult);
     setActiveSignalId(nextResult.revenueSignals[0]?.id ?? null);
@@ -166,6 +227,17 @@ export default function Home() {
     };
     setInput(nextInput);
     runAnalysis(nextInput);
+  }
+
+  function loadInitialDemoDataset() {
+    const nextInput = { ...hotelDemoInput, outputLanguage: "en" as SupportedLanguage };
+    const nextResult = analyzeCustomerVoice(nextInput);
+
+    setInput(nextInput);
+    setResult(nextResult);
+    setSelectedDatasetId("korean-summer-hotel");
+    setOutputLanguage("en");
+    setActiveSignalId(nextResult.revenueSignals[0]?.id ?? null);
   }
 
   function loadHotelDemoData() {
@@ -181,8 +253,12 @@ export default function Home() {
     setActiveSignalId(null);
     setCopiedId(null);
     setActionOutcomes([]);
+    setSentFollowupIds([]);
+    setContentStatuses({});
     window.localStorage.removeItem(storageKey);
     window.localStorage.removeItem(actionOutcomesStorageKey);
+    window.localStorage.removeItem(followupMessageStorageKey);
+    window.localStorage.removeItem(contentIdeaStatusStorageKey);
   }
 
   async function copyText(value: string, id: string) {
@@ -204,6 +280,14 @@ export default function Home() {
         timestamp: new Date().toISOString()
       })
     );
+  }
+
+  function markFollowupSent(messageId: string) {
+    setSentFollowupIds((current) => Array.from(new Set([...current, messageId])));
+  }
+
+  function markContentStatus(contentId: string, status: ContentIdeaStatus) {
+    setContentStatuses((current) => ({ ...current, [contentId]: status }));
   }
 
   function changeOutputLanguage(value: SupportedLanguage) {
@@ -494,8 +578,10 @@ export default function Home() {
               {result.followupMessages.map((message) => (
                 <FollowupCard
                   copiedId={copiedId}
+                  isSent={sentFollowupIds.includes(message.id)}
                   key={message.id}
                   message={message}
+                  onMarkSent={markFollowupSent}
                   onCopy={copyText}
                 />
               ))}
@@ -510,7 +596,14 @@ export default function Home() {
             />
             <div className="content-grid">
               {result.contentIdeas.map((idea) => (
-                <ContentCard copiedId={copiedId} idea={idea} key={idea.id} onCopy={copyText} />
+                <ContentCard
+                  copiedId={copiedId}
+                  idea={idea}
+                  key={idea.id}
+                  onCopy={copyText}
+                  onStatus={markContentStatus}
+                  status={contentStatuses[idea.id] ?? "ready"}
+                />
               ))}
             </div>
           </section>
@@ -560,228 +653,6 @@ export default function Home() {
   );
 }
 
-function RevenueActionCard({
-  action,
-  copiedId,
-  onCopy,
-  onStatus
-}: {
-  action: RevenueAction;
-  copiedId: string | null;
-  onCopy: (action: RevenueAction) => Promise<void>;
-  onStatus: (actionId: string, status: Exclude<ActionStatus, "ready">) => void;
-}) {
-  return (
-    <article className={`revenue-action-card ${action.priority}`}>
-      <div className="action-card-topline">
-        <span>{action.type.replace("_", " ")}</span>
-        <strong>{action.status}</strong>
-      </div>
-      <h3>{action.title}</h3>
-      <p>{action.targetSegment}</p>
-      <dl>
-        <div>
-          <dt>Why now</dt>
-          <dd>{action.whyNow}</dd>
-        </div>
-        <div>
-          <dt>Evidence</dt>
-          <dd>{action.evidence[0]}</dd>
-        </div>
-        <div>
-          <dt>Recommended action</dt>
-          <dd>{action.recommendedAction}</dd>
-        </div>
-      </dl>
-      <div className="action-button-row">
-        <button className="secondary-action compact" onClick={() => onCopy(action)} type="button">
-          {copiedId === action.id ? "Copied" : "Copy message"}
-        </button>
-        <button className="ghost-action compact" onClick={() => onStatus(action.id, "sent")} type="button">
-          Mark as sent
-        </button>
-        <button className="ghost-action compact" onClick={() => onStatus(action.id, "replied")} type="button">
-          Mark as replied
-        </button>
-        <button className="ghost-action compact" onClick={() => onStatus(action.id, "booked")} type="button">
-          Mark as booked
-        </button>
-        <button className="ghost-action compact" onClick={() => onStatus(action.id, "won")} type="button">
-          Mark as won
-        </button>
-        <button className="ghost-action compact" onClick={() => onStatus(action.id, "lost")} type="button">
-          Mark as lost
-        </button>
-      </div>
-    </article>
-  );
-}
-
-function SignalCard({
-  isActive,
-  onSelect,
-  signal
-}: {
-  isActive: boolean;
-  onSelect: () => void;
-  signal: RevenueSignal;
-}) {
-  return (
-    <button className={`signal-card ${isActive ? "active" : ""}`} onClick={onSelect} type="button">
-      <span className="signal-label">{signal.label}</span>
-      <strong>{signal.title}</strong>
-      <p>{signal.whyItMatters}</p>
-      <div className="signal-evidence">{signal.evidenceSnippet}</div>
-      <div className="signal-action">{signal.recommendedAction}</div>
-      <span className="turn-action">Turn into Action</span>
-      <div className="signal-metrics">
-        <Pill label="Confidence" value={`${signal.confidenceScore}`} tone="green" />
-        <Pill label="Urgency" value={levelLabel(signal.urgencyLevel)} tone={levelTone(signal.urgencyLevel)} />
-        <Pill label="Impact" value={levelLabel(signal.impactLevel)} tone={levelTone(signal.impactLevel)} />
-      </div>
-    </button>
-  );
-}
-
-function SectionHeader({ eyebrow, text, title }: { eyebrow: string; text: string; title: string }) {
-  return (
-    <div className="section-header">
-      <p className="revenue-eyebrow">{eyebrow}</p>
-      <h2>{title}</h2>
-      <p>{text}</p>
-    </div>
-  );
-}
-
-function TextAreaField({
-  label,
-  onChange,
-  placeholder,
-  value
-}: {
-  label: string;
-  onChange: (value: string) => void;
-  placeholder: string;
-  value: string;
-}) {
-  return (
-    <label className="revenue-field">
-      <span>{label}</span>
-      <textarea
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-        value={value}
-      />
-    </label>
-  );
-}
-
-function FollowupCard({
-  copiedId,
-  message,
-  onCopy
-}: {
-  copiedId: string | null;
-  message: FollowupMessage;
-  onCopy: (value: string, id: string) => Promise<void>;
-}) {
-  return (
-    <article className="message-card">
-      <span>{message.scenario}</span>
-      <h3>{message.title}</h3>
-      <p>{message.message}</p>
-      <small>{message.whyThisWorks}</small>
-      <small>{message.recommendedTiming}</small>
-      <button className="secondary-action compact" onClick={() => onCopy(message.message, message.id)} type="button">
-        {copiedId === message.id ? "Copied" : "Copy message"}
-      </button>
-    </article>
-  );
-}
-
-function ContentCard({
-  copiedId,
-  idea,
-  onCopy
-}: {
-  copiedId: string | null;
-  idea: ContentIdea;
-  onCopy: (value: string, id: string) => Promise<void>;
-}) {
-  return (
-    <article className="content-card">
-      <span>
-        P{idea.priority} · {idea.format}
-      </span>
-      <h3>{idea.title}</h3>
-      <p>{idea.hook}</p>
-      <ul>
-        {(idea.outline ?? ["No outline available"]).map((item) => (
-          <li key={item}>{item}</li>
-        ))}
-      </ul>
-      <small>{idea.whyItWillWork}</small>
-      <strong>{idea.callToAction}</strong>
-      <div className="action-button-row">
-        <button className="secondary-action compact" onClick={() => onCopy(idea.hook, idea.id)} type="button">
-          {copiedId === idea.id ? "Copied" : "Copy hook"}
-        </button>
-        <button className="ghost-action compact" type="button">
-          Mark as planned
-        </button>
-        <button className="ghost-action compact" type="button">
-          Mark as published
-        </button>
-      </div>
-    </article>
-  );
-}
-
-function ScriptSuggestionCard({ suggestion }: { suggestion: SalesScriptSuggestion }) {
-  return (
-    <article className="script-card">
-      <span>{suggestion.situation}</span>
-      <div className="script-lines">
-        <p>
-          <small>Problem</small>
-          {suggestion.currentProblem}
-        </p>
-        <p>
-          <small>Improve</small>
-          {suggestion.improvedLine}
-        </p>
-      </div>
-      <strong>{suggestion.whyItWorks}</strong>
-      <small>{suggestion.exampleUseCase}</small>
-    </article>
-  );
-}
-
-function MetricCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="metric-card">
-      <span>{label}</span>
-      <strong>{value}</strong>
-    </div>
-  );
-}
-
-function Pill({
-  label,
-  tone,
-  value
-}: {
-  label: string;
-  tone: "green" | "amber" | "red" | "gray";
-  value: string;
-}) {
-  return (
-    <span className={`metric-pill ${tone}`}>
-      {label}: {value}
-    </span>
-  );
-}
-
 function downloadFile(filename: string, content: string, type: string) {
   const blob = new Blob([content], { type });
   const url = URL.createObjectURL(blob);
@@ -798,17 +669,6 @@ function csvEscape(value: string) {
   return `"${value.replace(/"/g, "\"\"")}"`;
 }
 
-function levelLabel(level: UrgencyLevel | ImpactLevel) {
-  return level[0].toUpperCase() + level.slice(1);
-}
-
-function levelTone(level: UrgencyLevel | ImpactLevel): "green" | "amber" | "red" | "gray" {
-  if (level === "high") return "red";
-  if (level === "medium") return "amber";
-  if (level === "low") return "gray";
-  return "green";
-}
-
 function formatCurrency(value: number) {
   return `₩${value.toLocaleString("ko-KR")}`;
 }
@@ -823,6 +683,15 @@ function isCompatibleAnalysisResult(value: AnalysisResult | null | undefined): v
       value.contentIdeas.every((idea) => Array.isArray(idea.outline)) &&
       Array.isArray(value.followupMessages) &&
       Array.isArray(value.salesScriptSuggestions) &&
-      Array.isArray(value.weeklyActionPlan)
+      Array.isArray(value.revenueActions)
   );
+}
+
+function hasCustomerVoiceInput(input: CustomerVoiceInput) {
+  return [
+    input.competitorReviewsText,
+    input.leadCsv,
+    input.reviewsText,
+    input.salesNotesText
+  ].some((value) => value.trim().length > 0);
 }

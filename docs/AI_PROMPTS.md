@@ -18,7 +18,7 @@ Required arrays:
 - `contentIdeas`
 - `followupMessages`
 - `salesScriptSuggestions`
-- `weeklyActionPlan`
+- `revenueActions`
 
 ## System Prompt Direction
 

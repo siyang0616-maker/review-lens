@@ -1,5 +1,5 @@
 import type { ActionOutcome, OutcomeSummary, RevenueAction } from "../../types/revenue";
-import { parseMoney } from "./money";
+import { parseMoney } from "../../shared/money";
 
 export const actionOutcomesStorageKey = "reviewToRevenue.actionOutcomes";
 

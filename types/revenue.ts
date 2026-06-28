@@ -31,17 +31,13 @@ export type RevenueSignal = {
   type: RevenueSignalType;
   label: string;
   title: string;
-  description: string;
   whyItMatters: string;
   evidence: string[];
   evidenceItems: EvidenceItem[];
   evidenceSnippet: string;
   recommendedAction: string;
-  confidence: number;
   confidenceScore: number;
-  urgency: UrgencyLevel;
   urgencyLevel: UrgencyLevel;
-  impact: ImpactLevel;
   impactLevel: ImpactLevel;
 };
 
@@ -56,7 +52,6 @@ export type InsightItem = {
   id: string;
   category: InsightCategory;
   title: string;
-  description: string;
   evidence: string[];
   explanation: string;
   recommendedAction: string;
@@ -72,13 +67,9 @@ export type LeadRescueOpportunity = {
   context: string;
   likelyObjection: string;
   rescueReason: string;
-  nextBestAction: string;
-  suggestedMessage: string;
   recommendedMessage: string;
   score: number;
-  urgency: UrgencyLevel;
   urgencyLevel: UrgencyLevel;
-  potentialValue?: string;
   expectedValue: string;
   daysSinceLastContact?: number;
   tags: string[];
@@ -98,7 +89,6 @@ export type ContentIdea = {
     | "sales_asset";
   angle: string;
   targetObjection: string;
-  suggestedHook: string;
   hook: string;
   outline: string[];
   whyItWillWork: string;
@@ -136,25 +126,11 @@ export type SalesScriptSuggestion = {
   currentProblem: string;
   situation: string;
   weakLine: string;
-  improvedScript: string;
   improvedLine: string;
-  reason: string;
   whyItWorks: string;
   evidence: string;
   objectionHandled: string;
   exampleUseCase: string;
-};
-
-export type WeeklyAction = {
-  id: string;
-  priority: number;
-  day: string;
-  action: string;
-  owner: string;
-  due: string;
-  purpose: string;
-  expectedOutcome: string;
-  sourceSignalType: RevenueSignalType;
 };
 
 export type ActionStatus =
@@ -222,8 +198,8 @@ export type AnalysisResult = {
   sourceLanguages: SupportedLanguage[];
   outputLanguage: SupportedLanguage;
   inputSummary: {
-    reviewLines: number;
-    competitorReviewLines: number;
+    customerVoiceLines: number;
+    competitorVoiceLines: number;
     salesNoteLines: number;
     leadRows: number;
   };
@@ -237,7 +213,6 @@ export type AnalysisResult = {
   contentIdeas: ContentIdea[];
   followupMessages: FollowupMessage[];
   salesScriptSuggestions: SalesScriptSuggestion[];
-  weeklyActionPlan: WeeklyAction[];
   revenueActions: RevenueAction[];
   markdownReport: string;
 };

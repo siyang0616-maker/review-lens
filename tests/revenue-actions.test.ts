@@ -2,15 +2,15 @@ import { describe, expect, it } from "vitest";
 import {
   mergeActionOutcome,
   summarizeActionOutcomes
-} from "../lib/analysis/actionOutcomes";
-import { buildRevenueMarkdownReport } from "../lib/analysis/reportBuilder";
-import { analyzeRevenueSignals } from "../lib/analysis/revenueSignalEngine";
-import { demoDatasets, hotelDemoInput } from "../src/lib/sampleData";
+} from "../core/outcomes/actionOutcomes";
+import { buildRevenueMarkdownReport } from "../core/reports/markdownReport";
+import { analyzeCustomerVoice } from "../core/revenue/revenueEngine";
+import { demoDatasets, hotelDemoInput } from "../demo/datasets";
 import type { ActionOutcome, RevenueAction } from "../types/revenue";
 
 describe("revenue action board", () => {
   it("generates at least eight revenue actions for the hotel demo", () => {
-    const result = analyzeRevenueSignals(hotelDemoInput);
+    const result = analyzeCustomerVoice(hotelDemoInput);
 
     expect(result.revenueActions.length).toBeGreaterThanOrEqual(8);
     expect(new Set(result.revenueActions.map((action) => action.type))).toEqual(
@@ -19,7 +19,7 @@ describe("revenue action board", () => {
   });
 
   it("adds language metadata while keeping raw evidence compatible", () => {
-    const result = analyzeRevenueSignals(hotelDemoInput);
+    const result = analyzeCustomerVoice(hotelDemoInput);
     const signal = result.revenueSignals[0];
 
     expect(result.sourceLanguages).toContain("ko");
@@ -32,7 +32,7 @@ describe("revenue action board", () => {
   });
 
   it("keeps follow-up, content, and script actions execution-ready", () => {
-    const result = analyzeRevenueSignals(hotelDemoInput);
+    const result = analyzeCustomerVoice(hotelDemoInput);
 
     expect(result.followupMessages.every((message) => message.whyThisWorks)).toBe(true);
     expect(result.followupMessages.every((message) => message.recommendedTiming)).toBe(true);
@@ -72,11 +72,37 @@ describe("revenue action board", () => {
       "english-wedding-vendor",
       "english-clinic-med-spa"
     ]);
+    expect(demoDatasets.map((dataset) => dataset.name)).toEqual([
+      "Korean Summer Hotel Reviews",
+      "English Wedding Vendor Leads",
+      "English Clinic Consultation Leads"
+    ]);
     expect(demoDatasets.every((dataset) => dataset.description.includes("Synthetic"))).toBe(true);
   });
 
+  it("puts contact, content, and script work in the first three priority actions", () => {
+    const result = analyzeCustomerVoice(hotelDemoInput);
+
+    expect(result.revenueActions.slice(0, 3).map((action) => action.type)).toEqual([
+      "follow_up",
+      "content",
+      "script"
+    ]);
+  });
+
+  it("creates hotel-specific script improvements for the required booking objections", () => {
+    const result = analyzeCustomerVoice(hotelDemoInput);
+    const scripts = result.salesScriptSuggestions
+      .map((script) => `${script.currentProblem} ${script.improvedLine} ${script.objectionHandled}`)
+      .join("\n");
+
+    for (const requiredPhrase of ["총비용", "오션뷰", "가족", "부모님", "비교"]) {
+      expect(scripts).toContain(requiredPhrase);
+    }
+  });
+
   it("builds a revenue action markdown report", () => {
-    const result = analyzeRevenueSignals(hotelDemoInput);
+    const result = analyzeCustomerVoice(hotelDemoInput);
     const markdown = buildRevenueMarkdownReport(result, {
       outcomeSummary: {
         bookingsRecovered: 0,
@@ -95,7 +121,7 @@ describe("revenue action board", () => {
   });
 
   it("keeps markdown export stable for older saved results without revenueActions", () => {
-    const result = analyzeRevenueSignals(hotelDemoInput);
+    const result = analyzeCustomerVoice(hotelDemoInput);
     const legacyResult = {
       ...result,
       contentIdeas: result.contentIdeas.map((idea) => ({

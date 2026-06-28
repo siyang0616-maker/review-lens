@@ -50,13 +50,15 @@ Core contracts live in `types/revenue.ts`.
 
 Key analysis modules:
 
-- `lib/analysis/revenueSignalEngine.ts`: local rule-based revenue action engine
-- `lib/analysis/actionOutcomes.ts`: local outcome tracking helpers
-- `lib/analysis/reportBuilder.ts`: Markdown action report builder
-- `src/lib/sampleData/index.ts`: demo dataset registry
-- `src/lib/sampleData/hotelDemo.ts`: synthetic Korean summer hotel data
-- `src/lib/sampleData/weddingDemo.ts`: synthetic English wedding vendor data
-- `src/lib/sampleData/clinicDemo.ts`: synthetic English clinic / med spa data
+- `core/customerVoice/languageEngine.ts`: language signal extraction from customer voice
+- `core/revenue/revenueEngine.ts`: local rule-based customer voice to revenue action engine
+- `core/outcomes/actionOutcomes.ts`: local outcome tracking helpers
+- `core/reports/markdownReport.ts`: Markdown action report builder
+- `demo/datasets/index.ts`: demo dataset registry
+- `demo/datasets/hotelDemo.ts`: synthetic Korean summer hotel data
+- `demo/datasets/weddingDemo.ts`: synthetic English wedding vendor data
+- `demo/datasets/clinicDemo.ts`: synthetic English clinic / med spa data
+- `ui/revenue/RevenueWorkspaceComponents.tsx`: reusable workspace presentation components
 
 ## Demo Data
 
@@ -146,6 +148,7 @@ After validating that users want this workflow:
 ## Product Docs
 
 - `docs/PRODUCT_STRATEGY.md`
+- `docs/ARCHITECTURE.md`
 - `docs/ROADMAP.md`
 - `docs/VALIDATION_PLAN.md`
 - `docs/SAMPLE_REPORT.md`

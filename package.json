@@ -13,8 +13,7 @@
     "check": "npm run typecheck && npm run test && npm run build",
     "loop": "node scripts/next-loop.mjs",
     "test": "vitest run",
-    "test:ai-quality": "vitest run tests/ai-quality.live.test.ts",
-    "test:quality": "vitest run tests/quality-gates.test.ts",
+    "test:quality": "vitest run tests/revenue-engine.test.ts tests/revenue-actions.test.ts tests/hotel-demo.test.ts",
     "typecheck": "tsc --noEmit",
     "lint": "next lint"
   },
