@@ -1,134 +1,143 @@
-const languageSignals = [
+import type { ReactNode } from "react";
+
+const snapshotMetrics = [
   {
-    language: "Korean",
-    signal: "한국분들은 굳이",
-    meaning: "가격 대비 만족도와 실제 객실 상태에 대한 완곡하지만 강한 비추천",
-    risk: "High",
-    action: "실제 객실 사진, 엘리베이터 유무, 욕실 상태를 예약 전 안내에 명확히 표시"
+    label: "Revenue Leak Score",
+    note: "후속 설계가 약해 매출 기회가 새는 상태",
+    value: "74 / 100"
   },
   {
-    language: "Japanese",
-    signal: "次はないかな",
-    meaning: "정중하지만 재방문 의사가 낮다는 표현",
-    risk: "Medium",
-    action: "청결, 소음, 체크인 설명 부족을 조용히 개선할 수 있는 체크리스트 운영"
+    label: "Leads to Rescue",
+    note: "최근 상담에서 조용해진 고관심 리드",
+    value: "7명"
   },
   {
-    language: "Chinese",
-    signal: "避雷 / 踩雷",
-    meaning: "다른 여행자에게 피하라고 알리는 강한 회피 경고",
-    risk: "High",
-    action: "사진과 실제 시설 차이, 냄새, 가격 포함 사항을 우선 점검"
+    label: "Recommended Action Count",
+    note: "이번 주 바로 실행할 follow-up, content, script 액션",
+    value: "9개"
   },
   {
-    language: "English",
-    signal: "tourist trap",
-    meaning: "관광객 대상 가격/가치 불만과 신뢰 저하 신호",
-    risk: "Medium",
-    action: "가격 투명성, 포함 사항, 주변 교통/위치 설명을 더 구체화"
+    label: "Top Objection",
+    note: "가장 반복된 구매 반박",
+    value: "총 투자금 대비 회수 기간이 불확실합니다"
   }
 ];
 
-const quickFixes = [
-  "예약 페이지에 엘리베이터 없음, 도로변 소음 가능성, 욕실 크기를 숨기지 말고 선명하게 안내",
-  "체크인 메시지에 조용한 객실 요청 가능 여부와 조식 혼잡 시간 안내 추가",
-  "하우스키핑 체크리스트에 욕실 냄새, 침구 얼룩, 바닥 먼지 항목을 별도 분리"
+const revenueLeaks = [
+  {
+    action:
+      "초기 투자금 중 자기자본 비율, 월 고정비를 버틸 수 있는 기간, 운영자가 직접 투입 가능한 시간을 기준으로 다시 상담 일정을 잡습니다.",
+    evidence: [
+      "총 투자금은 알겠는데, 회수까지 얼마나 걸리는지가 제일 걱정입니다.",
+      "평균 매출 말고 안 됐을 때 어느 정도 버틸 수 있어야 하나요?",
+      "대출을 일부 받아야 해서 회수 기간이 길면 부담됩니다."
+    ],
+    title: "회수 기간 질문에 평균값만 답하고 대화가 끊김",
+    why:
+      "회수 기간 질문은 가격 반박처럼 보이지만 실제로는 리스크 판단 질문입니다. 평균 수익만 말하면 고객은 자기 상황에 적용하지 못합니다."
+  },
+  {
+    action:
+      "총 투자금, 월 고정비, 회수 기간 조건, 실패 리스크 확인 절차, 다음 상담 질문을 담은 가족용 5문장 요약을 보냅니다.",
+    evidence: [
+      "남편이 안정적인지 많이 볼 것 같아요.",
+      "아내가 프랜차이즈 창업을 좀 불안해합니다.",
+      "가족과 얘기해보고 괜찮으면 다시 연락드릴게요."
+    ],
+    title: "가족 상의 단계에서 고객이 혼자 설득하게 됨",
+    why:
+      "가족 상의는 거절이 아니라 내부 의사결정 단계입니다. 고객이 집에서 설명할 자료가 없으면 관심이 걱정 앞에서 사라집니다."
+  },
+  {
+    action:
+      "초기 투자금, 예상 고정비, 운영 난이도, 상권 의존도 4칸 표로 비교 기준을 잡아주고 다음 상담을 제안합니다.",
+    evidence: [
+      "A 브랜드는 창업비가 낮고 B 브랜드는 매출이 높다고 하던데요.",
+      "본사마다 말이 다 달라서 기준을 모르겠습니다.",
+      "블로그마다 추천하는 브랜드가 달라서 헷갈립니다."
+    ],
+    title: "브랜드 비교 질문이 검색 경쟁으로 빠짐",
+    why:
+      "브랜드 비교 질문은 구매 의지가 있다는 신호입니다. 비교 기준을 잡아주지 않으면 고객은 더 많은 정보를 찾다가 결정을 미룹니다."
+  }
 ];
 
-const staffChecklist = [
-  "체크인 시 소음에 민감한 고객에게 안쪽 객실 가능 여부를 먼저 안내",
-  "오후 3시 이전 욕실 냄새와 배수구 상태 재점검",
-  "외국어 리뷰에서 반복되는 표현을 주간 회의에서 5분만 공유",
-  "사진과 실제 시설 차이를 줄이기 위해 낡은 객실 사진을 최신 이미지로 교체 요청",
-  "부정 리뷰 답글은 방어보다 인정, 확인 중인 조치, 재발 방지 순서로 작성"
+const followupMessages = [
+  {
+    body:
+      "창업비는 금액 자체보다 내가 몇 개월을 버틸 수 있는 구조인지가 더 중요합니다. 자기자본, 월 고정비, 직접 운영 시간을 기준으로 지금 보시는 브랜드가 무리한 선택인지 먼저 봐드리겠습니다.",
+    title: "가격 고민 리드"
+  },
+  {
+    body:
+      "가족분들과 상의하실 때 도움이 되도록 총 투자금, 회수 기간, 운영 리스크를 짧게 정리해드릴게요. 필요하시면 그대로 보여주실 수 있는 1장 요약으로 보내드리겠습니다.",
+    title: "가족과 상의 리드"
+  },
+  {
+    body:
+      "A 브랜드와 B 브랜드는 창업비만 보면 판단이 어렵습니다. 초기 투자금, 월 고정비, 운영 난이도, 상권 영향을 기준으로 고객님 상황에 어떤 리스크가 더 큰지 같이 비교해드리겠습니다.",
+    title: "다른 브랜드 비교 리드"
+  }
+];
+
+const contentIdeas = [
+  {
+    objection: "총 투자금이 생각보다 큰데 괜찮을까요?",
+    purpose: "가격 질문을 리스크 판단으로 전환",
+    title: "프랜차이즈 창업비보다 먼저 봐야 할 3가지"
+  },
+  {
+    objection: "가족과 상의해보고 연락드릴게요.",
+    purpose: "가족 의사결정 단계에서 이탈 방지",
+    title: "배우자 설득 전에 준비해야 할 창업 체크리스트"
+  },
+  {
+    objection: "브랜드마다 말이 달라서 헷갈립니다.",
+    purpose: "브랜드 비교 리드를 상담으로 유도",
+    title: "A 브랜드 vs B 브랜드, 창업비 말고 비교할 기준"
+  },
+  {
+    objection: "몇 개월이면 투자금 회수되나요?",
+    purpose: "평균 수익 중심 상담의 한계 보완",
+    title: "회수 기간 질문할 때 꼭 같이 물어봐야 하는 것"
+  },
+  {
+    objection: "입지가 안 좋으면 손해가 클까요?",
+    purpose: "상권 불안을 사전 해소",
+    title: "상권이 안 좋으면 프랜차이즈도 실패할까?"
+  }
+];
+
+const scriptImprovements = [
+  {
+    after:
+      "금액만 먼저 보시면 부담스럽게 느껴질 수 있습니다. 투자금보다 먼저 자기자본, 월 고정비를 버틸 수 있는 기간, 직접 운영 시간을 같이 확인해야 감당 가능한 숫자인지 판단할 수 있습니다.",
+    before:
+      "창업비는 보통 8천만 원에서 1억 2천만 원 정도 보시면 됩니다. 자세한 금액은 브랜드와 평수에 따라 달라집니다.",
+    title: "투자금 질문 대응"
+  },
+  {
+    after:
+      "가족분들과 꼭 상의해보셔야 합니다. 다만 투자금, 회수 기간, 리스크를 한 번에 설명하기 어려우실 수 있어요. 가족분들께 보여주실 핵심 질문 5개를 정리해드릴까요?",
+    before: "네, 가족분들과 상의해보시고 연락 주세요.",
+    title: "가족과 상의 응대"
+  },
+  {
+    after:
+      "두 브랜드가 모두 괜찮아 보여도 고객님 상황에서는 리스크가 다를 수 있습니다. 창업비, 고정비, 운영 난이도, 상권 의존도 네 가지로 비교해보면 더 무리 없는 선택을 판단하기 쉽습니다.",
+    before: "A 브랜드도 좋고 B 브랜드도 괜찮습니다. 예산과 지역에 따라 달라요.",
+    title: "브랜드 비교 응대"
+  }
 ];
 
 const sevenDayPlan = [
-  { day: "Day 1", task: "최근 90일 1~3점 리뷰에서 청결, 소음, 가격 표현만 분리" },
-  { day: "Day 2", task: "예약 페이지와 Google Business Profile의 시설 설명 업데이트" },
-  { day: "Day 3", task: "하우스키핑 점검표에 욕실 냄새와 침구 상태 항목 추가" },
-  { day: "Day 4", task: "체크인 안내 메시지를 한국어/영어/일본어로 간단히 정리" },
-  { day: "Day 5", task: "낮은 평점 리뷰 5개에 정책 안전 답글 작성" },
-  { day: "Day 6", task: "직원에게 반복 표현과 개선 액션 공유" },
-  { day: "Day 7", task: "새 리뷰에서 같은 표현이 줄었는지 확인" }
-];
-
-const proofPoints = [
-  {
-    metric: "47 reviews",
-    label: "sample range",
-    note: "최근 90일 외국어/저평점 리뷰를 묶어 반복 신호만 추립니다."
-  },
-  {
-    metric: "9 repeats",
-    label: "hidden signals",
-    note: "예약 회피, 사진 차이, 냄새, 소음 표현이 반복된 샘플입니다."
-  },
-  {
-    metric: "3 fixes",
-    label: "owner action",
-    note: "리포트는 설명에서 끝나지 않고 오늘 고칠 항목으로 마무리합니다."
-  }
-];
-
-const purchaseReasons = [
-  "$49는 광고비가 아니라 이번 주 놓치고 있는 반박, 구매 동기, follow-up 기회를 찾는 비용입니다.",
-  "고객의 말 속 구매 망설임은 CRM 필드보다 먼저 나타납니다. 늦게 알아차리면 다음 상담과 콘텐츠에서 계속 손해가 납니다.",
-  "팀에게 바로 공유할 액션 플랜, follow-up 메시지, 콘텐츠 아이디어까지 포함해 다시 정리할 시간을 줄입니다."
-];
-
-const evidenceRows = [
-  {
-    quote: "사진 보고 기대하면 실망할 수 있습니다",
-    meaning: "사진과 실제 객실 차이를 예약 전 경고",
-    action: "낡은 객실 사진 교체, 객실 크기와 창문 상태 명시"
-  },
-  {
-    quote: "清潔感に欠ける",
-    meaning: "정중하지만 청결 신뢰가 낮다는 표현",
-    action: "욕실 냄새, 침구 얼룩, 바닥 먼지 점검 항목 분리"
-  },
-  {
-    quote: "避雷 / 别来",
-    meaning: "같은 언어권 여행자에게 피하라는 강한 신호",
-    action: "사진 차이, 냄새, 가격 포함 사항을 예약 페이지 상단에 보완"
-  }
-];
-
-const scopeRows = [
-  {
-    label: "Included",
-    items: "리뷰 30~100개, 언어권별 위험표현, 우선수정 3개, OTA 문구 수정안, 답글 3개, 직원 체크리스트"
-  },
-  {
-    label: "Not included",
-    items: "리뷰 삭제, 별점 보장, 허위 리뷰 작성, 플랫폼 정책을 우회하는 자동 답글 게시"
-  },
-  {
-    label: "Delivery",
-    items: "48시간 내 2~3페이지 PDF/Markdown 리포트. 모든 판단에는 원문 근거와 confidence를 표시"
-  }
-];
-
-const staffHandoffRows = [
-  {
-    problem: "사진보다 낡음",
-    frontDesk: "예약 전 객실 타입별 실제 사진을 안내",
-    housekeeping: "벽지, 침구, 욕실 노후 흔적 재점검",
-    reply: "사진과 실제 안내를 보완하겠습니다"
-  },
-  {
-    problem: "욕실 냄새",
-    frontDesk: "입실 전 객실 변경 가능 여부 확인",
-    housekeeping: "배수구, 환풍기, 수건 냄새 체크",
-    reply: "욕실 상태를 다시 점검하고 조치하겠습니다"
-  },
-  {
-    problem: "도로변 소음",
-    frontDesk: "소음 민감 고객에게 안쪽 객실 우선 안내",
-    housekeeping: "창문 잠금, 틈새, 귀마개 비치 확인",
-    reply: "객실 위치 안내를 더 명확히 하겠습니다"
-  }
+  "최근 30일 안에 멈춘 상담 리드 7명을 고릅니다.",
+  "가격 고민 리드 3명에게 회수 기간 기준 메시지를 보냅니다.",
+  "가족과 상의 리드 2명에게 가족용 요약 메시지를 보냅니다.",
+  "브랜드 비교 리드 2명에게 비교 기준표 메시지를 보냅니다.",
+  "가장 많이 반복된 반박 1개로 블로그 글 또는 짧은 영상 주제를 만듭니다.",
+  "상담 스크립트에서 '네, 연락 주세요'로 끝나는 문장을 바꿉니다.",
+  "답장, 재상담, 거절, 무응답을 기록하고 다음 주에 반복할 액션 1개를 고릅니다."
 ];
 
 export default function SampleReportPage() {
@@ -140,193 +149,165 @@ export default function SampleReportPage() {
             <span className="brand-mark">R</span>
             <span>Review-to-Revenue AI</span>
           </a>
-          <a className="top-link" href="/">
-            Dashboard
-          </a>
-          <a className="top-link" href="/outcomes">
-            Outcomes
-          </a>
-          <a className="top-link" href="/validation-kit">
-            Validation
-          </a>
+          <div className="topbar-actions">
+            <a className="top-link" href="/">
+              Dashboard
+            </a>
+            <a className="top-link" href="/outcomes">
+              Outcomes
+            </a>
+            <a className="top-link" href="/validation-kit">
+              Validation
+            </a>
+          </div>
         </div>
       </header>
 
       <section className="report-hero">
         <div>
-          <p className="eyebrow">Sample B2B report</p>
-          <h1>고객의 말에서 뽑은 이번 주 매출 액션</h1>
+          <p className="eyebrow">Sample Revenue Leak Diagnostic</p>
+          <h1>프랜차이즈 상담 메모에서 찾은 매출 누수 진단</h1>
           <p>
-            리뷰, 문의, 상담 메모를 바탕으로 고객 반박, 구매 동기, 이탈 이유,
-            follow-up 기회, 콘텐츠 아이디어를 한 주 실행 계획으로 바꿉니다.
+            Customer Voice → Revenue Action → Outcome Data 흐름에 맞춰, 상담 중단
+            이유를 요약이 아니라 이번 주 follow-up, content, script 액션으로 바꾼
+            샘플 리포트입니다.
           </p>
         </div>
         <div className="report-summary">
           <div>
-            <span>Review window</span>
-            <strong>Last 90 days</strong>
+            <span>Sample target</span>
+            <strong>프랜차이즈 / 창업 상담 운영사</strong>
           </div>
           <div>
-            <span>Revenue signal</span>
-            <strong>High</strong>
+            <span>Source</span>
+            <strong>익명 상담 메모 18개</strong>
           </div>
           <div>
-            <span>Priority</span>
-            <strong>Cleanliness, noise, value</strong>
+            <span>Fastest win</span>
+            <strong>가족 상의 리드 follow-up</strong>
           </div>
         </div>
       </section>
 
       <section className="report-band">
         <div className="metric-grid">
-          <Metric label="Objection" value="5/5" note="강한 구매 반박 반복" />
-          <Metric label="Confidence" value="82" note="여러 고객 텍스트에서 반복" />
-          <Metric label="Revenue risk" value="High" note="상담/전환 저해 가능" />
-          <Metric label="Owner action" value="3 fixes" note="오늘 바로 실행" />
+          {snapshotMetrics.map((metric) => (
+            <Metric key={metric.label} label={metric.label} note={metric.note} value={metric.value} />
+          ))}
         </div>
       </section>
 
       <section className="offer-strip">
         <div>
-          <p className="eyebrow">Pilot offer</p>
-          <h2>1회 고객 텍스트 매출 액션 리포트</h2>
+          <p className="eyebrow">Free validation offer</p>
+          <h2>Free Revenue Leak Diagnostic</h2>
           <p>
-            고객 텍스트 30~100개를 붙여넣어 보내주면 반복 반박, 구매 트리거,
-            살릴 리드, 콘텐츠 아이디어, 상담 스크립트 개선안을 정리합니다.
-            이번 주 매출 액션부터 확인합니다.
+            개인정보를 제거한 상담 메모 10~20개를 보내면, 어떤 고객 말이 매출
+            누수로 이어지는지와 이번 주 실행할 다음 액션을 같은 형식으로 정리합니다.
           </p>
         </div>
         <div className="offer-price">
-          <span>Pilot price</span>
-          <strong>$49</strong>
-          <p>48시간 내 2~3페이지 리포트</p>
+          <span>Paid next step</span>
+          <strong>Revenue Action Report</strong>
+          <p>더 많은 데이터, 메시지 라이브러리, 콘텐츠 계획, 7일 실행 계획</p>
           <a
             className="primary-link"
-            href="mailto:hello@example.com?subject=Review-to-Revenue%20AI%20Pilot%20Report"
+            href="mailto:hello@example.com?subject=Free%20Revenue%20Leak%20Diagnostic"
           >
-            파일럿 문의
+            무료 진단 문의
           </a>
-        </div>
-      </section>
-
-      <section className="report-band">
-        <div className="proof-grid">
-          {proofPoints.map((point) => (
-            <div className="proof-card" key={point.metric}>
-              <span>{point.label}</span>
-              <strong>{point.metric}</strong>
-              <p>{point.note}</p>
-            </div>
-          ))}
         </div>
       </section>
 
       <section className="report-layout">
         <div className="report-main">
-          <ReportSection title="Why Owners Pay">
-            <ul className="action-list">
-              {purchaseReasons.map((reason) => (
-                <li key={reason}>{reason}</li>
-              ))}
-            </ul>
-          </ReportSection>
-
-          <ReportSection title="Evidence Behind This Sample">
-            <div className="evidence-table">
-              {evidenceRows.map((item) => (
-                <div className="evidence-row" key={item.quote}>
-                  <strong>{item.quote}</strong>
-                  <p>{item.meaning}</p>
-                  <p>{item.action}</p>
-                </div>
-              ))}
-            </div>
-          </ReportSection>
-
-          <ReportSection title="What The $49 Pilot Includes">
-            <div className="scope-grid">
-              {scopeRows.map((row) => (
-                <div className="scope-row" key={row.label}>
-                  <span>{row.label}</span>
-                  <p>{row.items}</p>
-                </div>
-              ))}
-            </div>
-          </ReportSection>
-
           <ReportSection title="Executive Diagnosis">
             <p>
-              위치와 가격 접근성은 장점으로 보이지만, 외국어 리뷰에서는 객실 청결,
-              사진과 실제 시설 차이, 소음, 엘리베이터 없음에 대한 숨은 경고가 반복됩니다.
-              특히 한국어와 중국어 리뷰에서는 같은 언어권 여행자에게 예약 전 주의를 주는
-              표현이 감지됩니다.
+              상담이 끊기는 가장 큰 이유는 비싸다는 반응 자체가 아니라, 고객이
+              투자금과 회수 기간을 자기 상황에 적용하지 못한 채 가족 설득 단계로
+              넘어가기 때문입니다.
+            </p>
+            <p>
+              18개 상담 메모 중 11개는 첫 문의 당시 관심도가 높았습니다. 하지만
+              비용, 회수 기간, 가족 상의, 브랜드 비교 질문 이후 7개가 조용해졌고,
+              자료 발송 이후의 다음 연락 이유가 약했습니다.
             </p>
           </ReportSection>
 
-          <ReportSection title="Language Signal Breakdown">
+          <ReportSection title="Top 3 Revenue Leaks">
+            <div className="evidence-table">
+              {revenueLeaks.map((leak) => (
+                <article className="evidence-row" key={leak.title}>
+                  <strong>{leak.title}</strong>
+                  <p>{leak.why}</p>
+                  <ul>
+                    {leak.evidence.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                  <p>{leak.action}</p>
+                </article>
+              ))}
+            </div>
+          </ReportSection>
+
+          <ReportSection title="Follow-up Message Examples">
+            <div className="scope-grid">
+              {followupMessages.map((message) => (
+                <div className="scope-row" key={message.title}>
+                  <span>{message.title}</span>
+                  <p>{message.body}</p>
+                </div>
+              ))}
+            </div>
+          </ReportSection>
+
+          <ReportSection title="Content Ideas">
             <div className="signal-table">
-              {languageSignals.map((item) => (
-                <div className="signal-row" key={item.language}>
+              {contentIdeas.map((idea) => (
+                <div className="signal-row" key={idea.title}>
                   <div>
-                    <span className="signal-language">{item.language}</span>
-                    <strong>{item.signal}</strong>
+                    <span className="signal-language">{idea.purpose}</span>
+                    <strong>{idea.title}</strong>
                   </div>
-                  <p>{item.meaning}</p>
-                  <span className={`risk-badge ${item.risk.toLowerCase()}`}>{item.risk}</span>
-                  <p>{item.action}</p>
+                  <p>{idea.objection}</p>
+                  <span className="risk-badge medium">Content</span>
                 </div>
               ))}
             </div>
           </ReportSection>
 
-          <ReportSection title="Today’s 3 Fixes">
-            <ol className="action-list">
-              {quickFixes.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ol>
-          </ReportSection>
-
-          <ReportSection title="Staff Handoff Table">
+          <ReportSection title="Sales Script Before / After">
             <div className="handoff-table">
-              {staffHandoffRows.map((row) => (
-                <div className="handoff-row" key={row.problem}>
-                  <strong>{row.problem}</strong>
-                  <p>{row.frontDesk}</p>
-                  <p>{row.housekeeping}</p>
-                  <p>{row.reply}</p>
+              {scriptImprovements.map((script) => (
+                <div className="handoff-row" key={script.title}>
+                  <strong>{script.title}</strong>
+                  <p>Before: {script.before}</p>
+                  <p>After: {script.after}</p>
                 </div>
               ))}
-            </div>
-          </ReportSection>
-
-          <ReportSection title="Suggested Reply Draft">
-            <div className="reply-draft">
-              소중한 의견을 남겨주셔서 감사합니다. 말씀해주신 객실 상태와 안내 내용의
-              차이를 가볍게 보지 않고 있습니다. 현재 객실 사진, 시설 안내, 하우스키핑
-              점검표를 다시 확인하고 있으며, 예약 전 고객이 실제 상태를 더 명확히 알 수
-              있도록 안내를 보완하겠습니다.
             </div>
           </ReportSection>
         </div>
 
         <aside className="report-side">
           <div className="side-panel">
-            <h2>Staff Checklist</h2>
-            <ul>
-              {staffChecklist.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
+            <h2>Leads to Rescue</h2>
+            <ol className="action-list">
+              <li>투자금은 확인했지만 회수 기간을 물어본 리드</li>
+              <li>배우자 또는 가족과 상의한다고 한 리드</li>
+              <li>A 브랜드와 B 브랜드를 비교하던 리드</li>
+              <li>상권 리스크를 걱정했지만 상담 태도가 적극적이었던 리드</li>
+            </ol>
           </div>
 
           <div className="side-panel">
             <h2>Next 7 Days</h2>
             <div className="timeline">
-              {sevenDayPlan.map((item) => (
-                <div className="timeline-item" key={item.day}>
-                  <span>{item.day}</span>
-                  <p>{item.task}</p>
+              {sevenDayPlan.map((task, index) => (
+                <div className="timeline-item" key={task}>
+                  <span>Day {index + 1}</span>
+                  <p>{task}</p>
                 </div>
               ))}
             </div>
@@ -337,7 +318,7 @@ export default function SampleReportPage() {
   );
 }
 
-function Metric({ label, value, note }: { label: string; value: string; note: string }) {
+function Metric({ label, note, value }: { label: string; note: string; value: string }) {
   return (
     <div className="metric">
       <span>{label}</span>
@@ -347,13 +328,7 @@ function Metric({ label, value, note }: { label: string; value: string; note: st
   );
 }
 
-function ReportSection({
-  children,
-  title
-}: {
-  children: React.ReactNode;
-  title: string;
-}) {
+function ReportSection({ children, title }: { children: ReactNode; title: string }) {
   return (
     <section className="report-section">
       <h2>{title}</h2>

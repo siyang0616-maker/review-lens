@@ -16,6 +16,10 @@ Korean positioning:
 
 Product build is paused. The project is in evidence validation mode before Master PRD.
 
+Internal validation route:
+
+- `/validation-kit` is an internal interview and offer-test kit for founder-led validation. It is intentionally documented here instead of promoted in the main product navigation.
+
 ## What The MVP Does
 
 - Shows `This Week’s Revenue Actions` as the first screen.

@@ -347,7 +347,8 @@ export default function Home() {
           <a href="#actions">Actions</a>
           <a href="#signals">Signals</a>
           <a href="#input">Input</a>
-          <a href="#outcomes">Outcomes</a>
+          <a href="/sample-report">Sample Report</a>
+          <a href="/outcomes">Outcomes</a>
           <a href="#export">Export</a>
         </nav>
         <label className="language-control">
@@ -381,6 +382,9 @@ export default function Home() {
             <button className="secondary-action" onClick={loadSelectedDemoDataset} type="button">
               Load Demo Dataset
             </button>
+            <a className="secondary-action" href="/sample-report">
+              샘플 리포트 보기
+            </a>
             <button className="ghost-action" onClick={clearWorkspace} type="button">
               Clear
             </button>
@@ -460,6 +464,11 @@ export default function Home() {
                 label="Estimated recovered revenue"
                 value={formatCurrency(outcomeSummary.estimatedRecoveredRevenue)}
               />
+            </div>
+            <div className="workspace-actions">
+              <a className="secondary-action" href="/outcomes">
+                View full outcome history
+              </a>
             </div>
           </section>
         </>
