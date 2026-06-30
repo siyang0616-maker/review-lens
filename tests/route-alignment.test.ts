@@ -5,6 +5,12 @@ import { describe, expect, it } from "vitest";
 const homeSource = readFileSync("app/page.tsx", "utf8");
 const readmeSource = readFileSync("README.md", "utf8");
 const sampleReportSource = readFileSync("app/sample-report/page.tsx", "utf8");
+const landingSource = existsSync("app/landing/page.tsx")
+  ? readFileSync("app/landing/page.tsx", "utf8")
+  : "";
+const diagnosticSampleSource = existsSync("shared/leakDiagnosticSample.ts")
+  ? readFileSync("shared/leakDiagnosticSample.ts", "utf8")
+  : "";
 
 const oldSampleReportPhrases = [
   "한국분들은 굳이",
@@ -19,16 +25,17 @@ const oldSampleReportPhrases = [
 
 describe("route and sample report alignment", () => {
   it("keeps the sample report aligned to the franchise revenue leak diagnostic", () => {
-    expect(sampleReportSource).toContain("Revenue Leak Score");
-    expect(sampleReportSource).toContain("74 / 100");
-    expect(sampleReportSource).toContain("Leads to Rescue");
-    expect(sampleReportSource).toContain("7명");
-    expect(sampleReportSource).toContain("Recommended Action Count");
-    expect(sampleReportSource).toContain("9개");
-    expect(sampleReportSource).toContain("총 투자금 대비 회수 기간이 불확실합니다");
-    expect(sampleReportSource).toContain("회수 기간 질문");
-    expect(sampleReportSource).toContain("가족 상의");
-    expect(sampleReportSource).toContain("브랜드 비교");
+    expect(diagnosticSampleSource).toContain("Revenue Leak Score");
+    expect(diagnosticSampleSource).toContain("74");
+    expect(diagnosticSampleSource).toContain("Leads to Rescue");
+    expect(diagnosticSampleSource).toContain("7");
+    expect(diagnosticSampleSource).toContain("Recommended Action Count");
+    expect(diagnosticSampleSource).toContain("9");
+    expect(diagnosticSampleSource).toContain("총 투자금 대비 회수 기간이 불확실합니다");
+    expect(diagnosticSampleSource).toContain("회수 기간 질문");
+    expect(diagnosticSampleSource).toContain("가족과 상의");
+    expect(diagnosticSampleSource).toContain("브랜드 비교");
+    expect(sampleReportSource).toContain("@/shared/leakDiagnosticSample");
     expect(sampleReportSource).toContain("Follow-up Message Examples");
     expect(sampleReportSource).toContain("Content Ideas");
     expect(sampleReportSource).toContain("Sales Script Before / After");
@@ -43,6 +50,7 @@ describe("route and sample report alignment", () => {
     expect(homeSource).toContain('href="/sample-report"');
     expect(homeSource).toContain('href="/outcomes"');
     expect(homeSource).toContain("View full outcome history");
+    expect(readmeSource).toContain("/landing");
     expect(readmeSource).toContain("/validation-kit");
 
     const routes = pageRoutes("app");
@@ -56,6 +64,19 @@ describe("route and sample report alignment", () => {
     });
 
     expect(missingRoutes).toEqual([]);
+  });
+
+  it("keeps the landing page and sample report on one diagnostic data source", () => {
+    expect(existsSync("shared/leakDiagnosticSample.ts")).toBe(true);
+    expect(landingSource).toContain("@/shared/leakDiagnosticSample");
+    expect(sampleReportSource).toContain("@/shared/leakDiagnosticSample");
+
+    for (const source of [landingSource, sampleReportSource]) {
+      expect(source).not.toMatch(/\b74\s*\/\s*100\b/);
+      expect(source).not.toContain("7명");
+      expect(source).not.toContain("9개");
+      expect(source).not.toContain("초기 투자금 대비 회수 기간이 불확실합니다");
+    }
   });
 });
 

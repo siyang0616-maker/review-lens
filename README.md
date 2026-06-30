@@ -20,6 +20,11 @@ Internal validation route:
 
 - `/validation-kit` is an internal interview and offer-test kit for founder-led validation. It is intentionally documented here instead of promoted in the main product navigation.
 
+Public marketing route:
+
+- `/landing` is the external cold-outreach landing page for the free Revenue Leak Diagnostic. It is intentionally documented here instead of promoted in the main product navigation because the primary use case is direct sharing from email, SMS, and inquiry-form outreach.
+- `/sample-report` is the deeper proof asset linked from `/landing` for prospects who want to inspect the full diagnostic sample before requesting the free diagnostic.
+
 ## What The MVP Does
 
 - Shows `This Week’s Revenue Actions` as the first screen.
